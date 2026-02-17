@@ -212,8 +212,22 @@ const App: React.FC = () => {
         initialShift={editingShift}
       />
 
-      <footer className="mt-12 text-center px-4">
-        <p className="text-slate-400 text-[10px] font-medium uppercase tracking-widest">&copy; 2024 ShiftMaster &bull; Local First Architecture</p>
+      <footer className="mt-12 mb-8 flex justify-center px-4">
+        <a 
+          href="https://click.ecc.ac.jp/ecc/khant_si_thu/portfolio/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 text-[#6b7280] hover:text-blue-600 transition-all group"
+        >
+          <div className="flex-shrink-0">
+            <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="7" r="4.5" />
+              <path d="M12 13c-4.418 0-8 3.582-8 8v1h16v-1c0-4.418-3.582-8-8-8zm1 6.5h-2v2h2v-2z" opacity="0.9" />
+              <path d="M10.5 13.5l1.5 3 1.5-3z" opacity="0.6" />
+            </svg>
+          </div>
+          <span className="text-xl font-semibold tracking-tight">Portfolio</span>
+        </a>
       </footer>
     </div>
   );
