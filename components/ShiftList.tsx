@@ -12,10 +12,10 @@ interface ShiftListProps {
 }
 
 export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, onEdit, selectedJobName }) => {
-  // Sort shifts by date descending, then by time ascending
+  // Sort shifts by date ascending, then by time ascending as requested
   const sortedShifts = [...shifts].sort((a, b) => {
     if (a.date !== b.date) {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
     }
     return a.startTime.localeCompare(b.startTime);
   });
