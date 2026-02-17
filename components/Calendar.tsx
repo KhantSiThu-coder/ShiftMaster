@@ -1,0 +1,121 @@
+
+import React from 'react';
+import { Shift, Job } from '../types';
+
+interface CalendarProps {
+  currentDate: Date;
+  onDateClick: (date: string) => void;
+  onShiftClick: (shift: Shift) => void;
+  shifts: Shift[];
+  jobs: Job[];
+}
+
+export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, onShiftClick, shifts, jobs }) => {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  const firstDayOfMonth = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  const days = [];
+  // Padding for start of month
+  for (let i = 0; i < firstDayOfMonth; i++) {
+    days.push(null);
+  }
+  for (let i = 1; i <= daysInMonth; i++) {
+    days.push(i);
+  }
+
+  const getShiftsForDay = (day: number) => {
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    return shifts
+      .filter(s => s.date === dateStr)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime)); // Sort by time
+  };
+
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    const [h, m] = time.split(':');
+    return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+  };
+
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
+        <h2 className="text-xl font-black text-slate-800 tracking-tight">
+          {currentDate.toLocaleString(undefined, { month: 'long' })} <span className="text-blue-600">{year}</span>
+        </h2>
+        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          {shifts.filter(s => {
+            const d = new Date(s.date);
+            return d.getMonth() === month && d.getFullYear() === year;
+          }).length} Entries this month
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 border-b border-slate-100">
+        {dayNames.map((d, idx) => (
+          <div 
+            key={d} 
+            className={`py-3 text-center text-xs font-bold uppercase tracking-wider ${idx === 0 || idx === 6 ? 'text-red-500' : 'text-slate-400'}`}
+          >
+            {d}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 bg-slate-50/10">
+        {days.map((day, idx) => {
+          const isWeekend = idx % 7 === 0 || idx % 7 === 6;
+          
+          if (day === null) return <div key={`empty-${idx}`} className="h-24 sm:h-32 border-r border-b border-slate-100 bg-slate-50/40"></div>;
+          
+          const dayShifts = getShiftsForDay(day);
+          const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+          const isToday = new Date().toISOString().split('T')[0] === dateStr;
+
+          return (
+            <div 
+              key={day} 
+              onClick={() => onDateClick(dateStr)}
+              className={`h-24 sm:h-32 border-r border-b border-slate-100 p-2 cursor-pointer hover:bg-blue-50/30 transition-colors relative overflow-hidden group`}
+            >
+              <span className={`text-sm font-bold ${
+                isToday 
+                  ? 'bg-blue-600 text-white w-7 h-7 flex items-center justify-center rounded-full shadow-md' 
+                  : (isWeekend ? 'text-red-500' : 'text-slate-600')
+              }`}>
+                {day}
+              </span>
+              <div className="mt-1 space-y-1 overflow-y-auto max-h-[calc(100%-1.8rem)] scrollbar-hide">
+                {dayShifts.map((s, i) => {
+                  const job = jobs.find(j => j.id === s.jobId);
+                  const color = job?.color || (s.type === 'general' ? '#64748b' : '#3b82f6');
+                  return (
+                    <div 
+                      key={i} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShiftClick(s);
+                      }}
+                      className="text-[9px] px-1 py-0.5 rounded border border-white/20 truncate text-white shadow-sm font-bold font-mono hover:scale-105 transition-transform"
+                      style={{ backgroundColor: color }}
+                    >
+                      {formatTime(s.startTime)} {s.type === 'general' ? (s.title || 'Event') : (job?.name || 'Work')}
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
