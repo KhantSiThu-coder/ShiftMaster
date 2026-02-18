@@ -42,12 +42,12 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/30">
-        <h2 className="text-xl font-black text-slate-800 tracking-tight">
-          {currentDate.toLocaleString(undefined, { month: 'long' })} <span className="text-blue-600">{year}</span>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors duration-300">
+      <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
+        <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
+          {currentDate.toLocaleString(undefined, { month: 'long' })} <span className="text-blue-600 dark:text-blue-400">{year}</span>
         </h2>
-        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           {shifts.filter(s => {
             const d = new Date(s.date);
             return d.getMonth() === month && d.getFullYear() === year;
@@ -55,21 +55,21 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
         </div>
       </div>
 
-      <div className="grid grid-cols-7 border-b border-slate-100">
+      <div className="grid grid-cols-7 border-b border-slate-100 dark:border-slate-800">
         {dayNames.map((d, idx) => (
           <div 
             key={d} 
-            className={`py-3 text-center text-xs font-bold uppercase tracking-wider ${idx === 0 || idx === 6 ? 'text-red-500' : 'text-slate-400'}`}
+            className={`py-3 text-center text-xs font-bold uppercase tracking-wider ${idx === 0 || idx === 6 ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}`}
           >
             {d}
           </div>
         ))}
       </div>
-      <div className="grid grid-cols-7 bg-slate-50/10">
+      <div className="grid grid-cols-7 bg-slate-50/10 dark:bg-slate-950/10">
         {days.map((day, idx) => {
           const isWeekend = idx % 7 === 0 || idx % 7 === 6;
           
-          if (day === null) return <div key={`empty-${idx}`} className="h-24 sm:h-32 border-r border-b border-slate-100 bg-slate-50/40"></div>;
+          if (day === null) return <div key={`empty-${idx}`} className="h-24 sm:h-32 border-r border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40"></div>;
           
           const dayShifts = getShiftsForDay(day);
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -79,12 +79,12 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
             <div 
               key={day} 
               onClick={() => onDateClick(dateStr)}
-              className={`h-24 sm:h-32 border-r border-b border-slate-100 p-2 cursor-pointer hover:bg-blue-50/30 transition-colors relative overflow-hidden group`}
+              className={`h-24 sm:h-32 border-r border-b border-slate-100 dark:border-slate-800 p-2 cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors relative overflow-hidden group`}
             >
               <span className={`text-sm font-bold ${
                 isToday 
-                  ? 'bg-blue-600 text-white w-7 h-7 flex items-center justify-center rounded-full shadow-md' 
-                  : (isWeekend ? 'text-red-500' : 'text-slate-600')
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white w-7 h-7 flex items-center justify-center rounded-full shadow-md' 
+                  : (isWeekend ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-400')
               }`}>
                 {day}
               </span>
@@ -99,7 +99,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
                         e.stopPropagation();
                         onShiftClick(s);
                       }}
-                      className="text-[9px] px-1 py-0.5 rounded border border-white/20 truncate text-white shadow-sm font-bold font-mono hover:scale-105 transition-transform"
+                      className="text-[9px] px-1 py-0.5 rounded border border-white/20 dark:border-black/20 truncate text-white shadow-sm font-bold font-mono hover:scale-105 transition-transform"
                       style={{ backgroundColor: color }}
                     >
                       {formatTime(s.startTime)} {s.type === 'general' ? (s.title || 'Event') : (job?.name || 'Work')}
@@ -108,7 +108,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
                 })}
               </div>
               <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-5 h-5 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+                <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
                 </div>
               </div>

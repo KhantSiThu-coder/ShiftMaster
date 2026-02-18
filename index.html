@@ -6,11 +6,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shifthu</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'media',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+          },
+        },
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
+        }
+        /* Custom scrollbar for dark mode */
+        @media (prefers-color-scheme: dark) {
+          ::-webkit-scrollbar {
+            width: 8px;
+          }
+          ::-webkit-scrollbar-track {
+            background: #0f172a;
+          }
+          ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 10px;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+          }
         }
     </style>
 <script type="importmap">
@@ -26,7 +53,7 @@
 }
 </script>
 </head>
-<body>
+<body class="bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
     <div id="root"></div>
     <!-- Explicitly entry point for Vite/Vercel build -->
     <script type="module" src="/index.tsx"></script>

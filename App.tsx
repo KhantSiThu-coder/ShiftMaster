@@ -148,15 +148,15 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50 pb-12">
-      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-50 px-4 py-3 shadow-sm">
+    <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950/50 pb-12 transition-colors duration-300">
+      <nav className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 sticky top-0 z-50 px-4 py-3 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 flex-shrink-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg sm:rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/20 flex-shrink-0">
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             </div>
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-slate-800 leading-tight truncate">Shifthu</h1>
+              <h1 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 leading-tight truncate">Shifthu</h1>
             </div>
           </div>
           
@@ -165,7 +165,7 @@ const App: React.FC = () => {
             <div className="relative" ref={filterRef}>
               <button 
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="text-[10px] sm:text-xs font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2 hover:bg-slate-100 transition-colors"
+                className="text-[10px] sm:text-xs font-bold px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-slate-200"
               >
                 <span className="max-w-[80px] sm:max-w-none truncate">
                   {activeFilterName || 'All'}
@@ -174,18 +174,18 @@ const App: React.FC = () => {
               </button>
 
               {isFilterOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="flex flex-col gap-1">
                     <button 
                       onClick={() => { setSelectedJobIds([]); setIsFilterOpen(false); }}
-                      className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors ${selectedJobIds.length === 0 ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                      className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors ${selectedJobIds.length === 0 ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                     >
                       Show All
                     </button>
-                    <div className="h-px bg-slate-100 my-1"></div>
+                    <div className="h-px bg-slate-100 dark:bg-slate-800 my-1"></div>
                     <button 
                       onClick={() => toggleJobFilter('general')}
-                      className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-between ${selectedJobIds.includes('general') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                      className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-between ${selectedJobIds.includes('general') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                     >
                       General
                       {selectedJobIds.includes('general') && <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>}
@@ -194,7 +194,7 @@ const App: React.FC = () => {
                       <button 
                         key={job.id}
                         onClick={() => toggleJobFilter(job.id)}
-                        className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-between ${selectedJobIds.includes(job.id) ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-between ${selectedJobIds.includes(job.id) ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
                       >
                         <div className="flex items-center gap-2 truncate">
                           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: job.color }}></div>
@@ -208,7 +208,7 @@ const App: React.FC = () => {
               )}
             </div>
 
-            <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-tighter bg-slate-100 px-2 sm:px-3 py-1.5 rounded-full whitespace-nowrap">
+            <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-2 sm:px-3 py-1.5 rounded-full whitespace-nowrap">
               {currentDate.toLocaleString(undefined, { month: 'short', year: '2-digit' })}
             </div>
           </div>
@@ -217,8 +217,8 @@ const App: React.FC = () => {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         <div className="flex items-center justify-between mb-3 sm:hidden">
-          <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Summary</h2>
-          <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+          <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Monthly Summary</h2>
+          <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/30">
             {activeFilterName || 'Consolidated'}
           </span>
         </div>
@@ -227,31 +227,31 @@ const App: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-3 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 bg-white px-4 py-3 sm:px-6 sm:py-4 rounded-2xl border border-slate-100 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 bg-white dark:bg-slate-900 px-4 py-3 sm:px-6 sm:py-4 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-colors duration-300">
               <div className="flex gap-1.5 sm:gap-2">
-                <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-50 rounded-lg transition-colors border border-slate-100">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                <button onClick={() => changeMonth(-1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-100 dark:border-slate-800">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
-                <button onClick={() => setCurrentDate(new Date())} className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-bold text-slate-500 uppercase hover:bg-slate-50 rounded-lg transition-colors border border-slate-100">
+                <button onClick={() => setCurrentDate(new Date())} className="px-3 sm:px-4 py-2 text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-100 dark:border-slate-800">
                   Today
                 </button>
-                <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-50 rounded-lg transition-colors border border-slate-100">
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                <button onClick={() => changeMonth(1)} className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors border border-slate-100 dark:border-slate-800">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
               </div>
               
               <div className="flex items-center gap-2">
-                <div className="flex bg-slate-100 p-1 rounded-xl">
+                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
                   <button 
                     onClick={() => setViewMode('calendar')}
-                    className={`p-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'calendar' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     title="Calendar View"
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                   </button>
                   <button 
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     title="List View"
                   >
                     <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
@@ -260,7 +260,7 @@ const App: React.FC = () => {
 
                 <button 
                   onClick={() => openAddModal(new Date().toISOString().split('T')[0])}
-                  className="bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all flex items-center gap-2"
+                  className="bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-100 dark:shadow-none hover:bg-blue-700 transition-all flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>
                   <span className="hidden sm:inline">Add Entry</span>
@@ -302,9 +302,9 @@ const App: React.FC = () => {
           <div className="space-y-6">
             <JobManager jobs={jobs} onAdd={handleAddJob} onDelete={handleDeleteJob} />
             
-            <div className="p-6 bg-slate-100 rounded-3xl border border-slate-200">
-              <h3 className="text-sm font-bold text-slate-800 mb-2">Instructions</h3>
-              <ul className="text-xs text-slate-500 space-y-2">
+            <div className="p-6 bg-slate-100 dark:bg-slate-900/50 rounded-3xl border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-2">Instructions</h3>
+              <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-2">
                 <li>• Add jobs with hourly rates to track earnings.</li>
                 <li>• Click any date to add a shift or event.</li>
                 <li>• Click an existing entry to edit or delete it.</li>
@@ -330,7 +330,7 @@ const App: React.FC = () => {
           href="https://click.ecc.ac.jp/ecc/khant_si_thu/portfolio/" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex items-center gap-2 text-[#6b7280] hover:text-blue-600 transition-all group"
+          className="flex items-center gap-2 text-[#6b7280] dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all group"
         >
           <div className="flex-shrink-0">
             <svg className="w-7 h-7 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
