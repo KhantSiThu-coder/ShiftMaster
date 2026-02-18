@@ -52,6 +52,17 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     setFormData({ ...formData, [type]: newTime });
   };
 
+  const handleTypeSwitch = (type: EntryType) => {
+    setFormData(prev => ({
+      ...prev,
+      type,
+      // If switching to general, clear the jobId. If switching to work, set to first job if none exists.
+      jobId: type === 'general' ? undefined : (prev.jobId || jobs[0]?.id || ''),
+      // Also clear work-specific fields if it's general
+      breakMinutes: type === 'general' ? 0 : prev.breakMinutes
+    }));
+  };
+
   const TimeSelector = ({ label, value, type }: { label: string; value: string; type: 'startTime' | 'endTime' }) => {
     const [h, m] = value.split(':');
     return (
@@ -91,6 +102,18 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     }
   };
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Final check to ensure consistency before saving
+    const finalData = { ...formData };
+    if (finalData.type === 'general') {
+      delete finalData.jobId;
+      finalData.breakMinutes = 0;
+    }
+    onSave(finalData);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose}></div>
@@ -102,11 +125,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
           </button>
         </div>
         
-        <form className="p-6 space-y-4" onSubmit={(e) => {
-          e.preventDefault();
-          onSave(formData);
-          onClose();
-        }}>
+        <form className="p-6 space-y-4" onSubmit={handleSubmit}>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Date</label>
@@ -122,7 +141,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
                 {(['work', 'general'] as EntryType[]).map(t => (
                   <button
                     key={t} type="button"
-                    onClick={() => setFormData({ ...formData, type: t })}
+                    onClick={() => handleTypeSwitch(t)}
                     className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all ${formData.type === t ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'}`}
                   >
                     {t}
@@ -147,7 +166,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
             <div>
               <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Select Job</label>
               <select 
-                value={formData.jobId}
+                value={formData.jobId || ''}
                 onChange={e => setFormData({ ...formData, jobId: e.target.value })}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium cursor-pointer"
               >
