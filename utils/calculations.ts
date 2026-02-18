@@ -31,10 +31,13 @@ export const calculateShiftHours = (shift: Shift): { total: number; late: number
   };
 };
 
-export const aggregateStats = (shifts: Shift[], jobs: Job[], selectedJobId?: string): ShiftStats => {
+export const aggregateStats = (shifts: Shift[], jobs: Job[], selectedJobIds?: string[]): ShiftStats => {
   const filteredShifts = shifts.filter(s => {
-    if (selectedJobId && s.jobId !== selectedJobId) return false;
-    return s.type === 'work';
+    if (s.type !== 'work') return false;
+    if (selectedJobIds && selectedJobIds.length > 0) {
+      return selectedJobIds.includes(s.jobId || '');
+    }
+    return true;
   });
 
   // Calculate transport fees: once per job per day

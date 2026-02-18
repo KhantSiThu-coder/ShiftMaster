@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Shift, ShiftStats, Job } from './types';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Shift, Job } from './types';
 import { getAllShifts, addShift, updateShift, deleteShift, getAllJobs, saveJob, deleteJob } from './utils/db';
 import { aggregateStats } from './utils/calculations';
 import { StatsCards } from './components/StatsCards';
@@ -18,8 +18,10 @@ const App: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
-  const [selectedJobId, setSelectedJobId] = useState<string | undefined>();
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const filterRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -35,6 +37,17 @@ const App: React.FC = () => {
     loadData();
   }, [loadData]);
 
+  // Close filter dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
+        setIsFilterOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const monthlyShifts = useMemo(() => {
     return shifts.filter(s => {
       const d = new Date(s.date);
@@ -43,8 +56,8 @@ const App: React.FC = () => {
   }, [shifts, currentDate]);
 
   const stats = useMemo(() => {
-    return aggregateStats(monthlyShifts, jobs, selectedJobId);
-  }, [monthlyShifts, jobs, selectedJobId]);
+    return aggregateStats(monthlyShifts, jobs, selectedJobIds);
+  }, [monthlyShifts, jobs, selectedJobIds]);
 
   const handleSaveShift = async (shiftData: Shift) => {
     try {
@@ -104,21 +117,35 @@ const App: React.FC = () => {
   };
 
   const activeFilterName = useMemo(() => {
-    if (selectedJobId === 'general') return 'General';
-    return jobs.find(j => j.id === selectedJobId)?.name;
-  }, [jobs, selectedJobId]);
+    if (selectedJobIds.length === 0) return undefined;
+    if (selectedJobIds.length === 1) {
+      if (selectedJobIds[0] === 'general') return 'General';
+      return jobs.find(j => j.id === selectedJobIds[0])?.name;
+    }
+    return `${selectedJobIds.length} Filters`;
+  }, [jobs, selectedJobIds]);
 
   const filteredHistoryShifts = useMemo(() => {
-    if (!selectedJobId) return monthlyShifts;
-    if (selectedJobId === 'general') return monthlyShifts.filter(s => s.type === 'general');
-    return monthlyShifts.filter(s => s.jobId === selectedJobId);
-  }, [monthlyShifts, selectedJobId]);
+    if (selectedJobIds.length === 0) return monthlyShifts;
+    return monthlyShifts.filter(s => {
+      if (s.type === 'general') return selectedJobIds.includes('general');
+      return selectedJobIds.includes(s.jobId || '');
+    });
+  }, [monthlyShifts, selectedJobIds]);
 
   const filteredCalendarShifts = useMemo(() => {
-    if (!selectedJobId) return shifts;
-    if (selectedJobId === 'general') return shifts.filter(s => s.type === 'general');
-    return shifts.filter(s => s.jobId === selectedJobId);
-  }, [shifts, selectedJobId]);
+    if (selectedJobIds.length === 0) return shifts;
+    return shifts.filter(s => {
+      if (s.type === 'general') return selectedJobIds.includes('general');
+      return selectedJobIds.includes(s.jobId || '');
+    });
+  }, [shifts, selectedJobIds]);
+
+  const toggleJobFilter = (id: string) => {
+    setSelectedJobIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-12">
@@ -134,15 +161,53 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4">
-            <select 
-              className="text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg outline-none cursor-pointer max-w-[90px] sm:max-w-none truncate"
-              value={selectedJobId || ''}
-              onChange={e => setSelectedJobId(e.target.value || undefined)}
-            >
-              <option value="">All</option>
-              <option value="general">General</option>
-              {jobs.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
-            </select>
+            {/* Custom Multi-Select Filter */}
+            <div className="relative" ref={filterRef}>
+              <button 
+                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                className="text-[10px] sm:text-xs font-bold px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center gap-2 hover:bg-slate-100 transition-colors"
+              >
+                <span className="max-w-[80px] sm:max-w-none truncate">
+                  {activeFilterName || 'All'}
+                </span>
+                <svg className={`w-3 h-3 transition-transform ${isFilterOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </button>
+
+              {isFilterOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex flex-col gap-1">
+                    <button 
+                      onClick={() => { setSelectedJobIds([]); setIsFilterOpen(false); }}
+                      className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors ${selectedJobIds.length === 0 ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      Show All
+                    </button>
+                    <div className="h-px bg-slate-100 my-1"></div>
+                    <button 
+                      onClick={() => toggleJobFilter('general')}
+                      className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-between ${selectedJobIds.includes('general') ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                    >
+                      General
+                      {selectedJobIds.includes('general') && <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>}
+                    </button>
+                    {jobs.map(job => (
+                      <button 
+                        key={job.id}
+                        onClick={() => toggleJobFilter(job.id)}
+                        className={`text-left px-3 py-2 text-xs font-bold rounded-lg transition-colors flex items-center justify-between ${selectedJobIds.includes(job.id) ? 'bg-blue-50 text-blue-600' : 'text-slate-600 hover:bg-slate-50'}`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: job.color }}></div>
+                          <span className="truncate">{job.name}</span>
+                        </div>
+                        {selectedJobIds.includes(job.id) && <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"></path></svg>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-tighter bg-slate-100 px-2 sm:px-3 py-1.5 rounded-full whitespace-nowrap">
               {currentDate.toLocaleString(undefined, { month: 'short', year: '2-digit' })}
             </div>
@@ -154,7 +219,7 @@ const App: React.FC = () => {
         <div className="flex items-center justify-between mb-3 sm:hidden">
           <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Monthly Summary</h2>
           <span className="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-            {selectedJobId === 'general' ? 'General' : selectedJobId ? jobs.find(j => j.id === selectedJobId)?.name : 'Consolidated'}
+            {activeFilterName || 'Consolidated'}
           </span>
         </div>
 
