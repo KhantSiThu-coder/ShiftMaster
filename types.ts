@@ -8,6 +8,8 @@ export interface Job {
   hourlyRate?: number;
   transportFee?: number;
   lateNightBonusPercent?: number; // Added: percentage bonus for late night hours
+  paymentPeriodType?: 'month' | 'custom';
+  paymentPeriodStartDay?: number; // e.g., 26 for 26th to 25th
 }
 
 export interface Shift {
@@ -28,4 +30,5 @@ export interface ShiftStats {
   lateNightHours: number;
   estimatedPay: number;
   totalTransportExpenses: number;
+  totalEstPay: number;
 }

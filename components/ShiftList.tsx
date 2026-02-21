@@ -74,17 +74,17 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
-            <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
-              <th className="px-6 py-4">Date</th>
-              <th className="px-6 py-4">Hours</th>
+            <tr className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-[9px] font-bold uppercase tracking-widest border-b border-slate-100 dark:border-slate-800">
+              <th className="px-4 py-3">Date</th>
+              <th className="px-4 py-3">Hours</th>
               {displayMode === 'all' && (
                 <>
-                  <th className="px-6 py-4">Break</th>
-                  <th className="px-6 py-4">Late Night</th>
+                  <th className="px-4 py-3">Break</th>
+                  <th className="px-4 py-3">Late Night</th>
                 </>
               )}
-              <th className="px-6 py-4">Job Name</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="px-4 py-3">Job Name</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -101,49 +101,49 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
                 
                 return (
                   <tr key={shift.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/30 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-700 dark:text-slate-200 text-sm">
-                        {new Date(shift.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                    <td className="px-4 py-3 min-w-[120px]">
+                      <div className="font-semibold text-slate-700 dark:text-slate-200 text-xs leading-tight">
+                        {new Date(shift.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })},
                       </div>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono tracking-tighter">
-                        {formatTime(shift.startTime)} — {formatTime(shift.endTime)}
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-tight mt-0.5">
+                        {formatTime(shift.startTime)}–{formatTime(shift.endTime)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-black text-slate-800 dark:text-slate-100 text-sm">{total.toFixed(1)}h</td>
+                    <td className="px-4 py-3 font-black text-slate-800 dark:text-slate-100 text-[10px]">{total.toFixed(1)}h</td>
                     
                     {displayMode === 'all' && (
                       <>
-                        <td className="px-6 py-4 text-slate-500 dark:text-slate-400 text-xs font-medium">{shift.breakMinutes}m</td>
-                        <td className="px-6 py-4">
+                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-[10px] font-medium">{shift.breakMinutes}m</td>
+                        <td className="px-4 py-3">
                           {late > 0 ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30">
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30">
                               {late.toFixed(1)}h late
                             </span>
                           ) : (
-                            <span className="text-slate-300 dark:text-slate-700 text-xs">—</span>
+                            <span className="text-slate-300 dark:text-slate-700 text-[10px]">—</span>
                           )}
                         </td>
                       </>
                     )}
 
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1.5">
                         {shift.type === 'general' ? (
                           <>
-                            <div className="w-2 h-2 rounded-full bg-slate-400 dark:bg-slate-600"></div>
-                            <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate max-w-[120px]">{shift.title || 'General Event'}</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600"></div>
+                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[100px]">{shift.title || 'General Event'}</span>
                           </>
                         ) : job ? (
                           <>
-                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: job.color }}></div>
-                            <span className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[120px]">{job.name}</span>
+                            <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: job.color }}></div>
+                            <span className="text-[10px] font-semibold text-slate-700 dark:text-slate-200 truncate max-w-[100px]">{job.name}</span>
                           </>
                         ) : (
-                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">Unassigned Work</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">Unassigned Work</span>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => onEdit(shift)}

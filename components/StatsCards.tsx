@@ -3,23 +3,23 @@ import React from 'react';
 import { ShiftStats } from '../types';
 
 const StatCard: React.FC<{ title: string; value: string | number; sub: string; icon: React.ReactNode; color: string; fullWidthMobile?: boolean }> = ({ title, value, sub, icon, color, fullWidthMobile }) => (
-  <div className={`bg-white dark:bg-slate-900 p-3 sm:p-5 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center space-x-3 sm:space-x-4 transition-colors duration-300 ${fullWidthMobile ? 'col-span-2 sm:col-span-1' : ''}`}>
-    <div className={`p-2 sm:p-3.5 rounded-xl sm:rounded-2xl ${color} text-white shadow-lg flex-shrink-0`}>
+  <div className={`bg-white dark:bg-slate-900 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center space-x-1.5 sm:space-x-2.5 transition-colors duration-300 ${fullWidthMobile ? 'col-span-2 sm:col-span-1' : ''}`}>
+    <div className={`p-1 sm:p-2 rounded-lg sm:rounded-xl ${color} text-white shadow-md flex-shrink-0`}>
       {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { 
-        className: 'w-4 h-4 sm:w-5 sm:h-5' 
+        className: 'w-3 h-3 sm:w-4 sm:h-4' 
       }) : icon}
     </div>
     <div className="min-w-0 flex-1">
-      <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-1 truncate">{title}</p>
-      <h3 className="text-sm sm:text-2xl font-black text-slate-800 dark:text-slate-100 leading-none truncate">{value}</h3>
-      <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 mt-1 font-medium truncate">{sub}</p>
+      <p className="text-[7px] sm:text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-0.5 truncate">{title}</p>
+      <h3 className="text-[10px] sm:text-sm font-black text-slate-800 dark:text-slate-100 leading-none truncate">{value}</h3>
+      <p className="text-[7px] sm:text-[8px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium truncate">{sub}</p>
     </div>
   </div>
 );
 
 export const StatsCards: React.FC<{ stats: ShiftStats }> = ({ stats }) => {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8">
+    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
       <StatCard 
         title="Work Hours" 
         value={`${stats.totalHours.toFixed(1)}h`} 
@@ -49,12 +49,18 @@ export const StatsCards: React.FC<{ stats: ShiftStats }> = ({ stats }) => {
         icon={<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>}
       />
       <StatCard 
+        title="Total Est. Pay" 
+        value={stats.totalEstPay.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} 
+        sub="Net Sum"
+        color="bg-rose-600 dark:bg-rose-500"
+        icon={<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>}
+      />
+      <StatCard 
         title="Active Days" 
         value={stats.totalDays} 
         sub="Monthly"
         color="bg-violet-600 dark:bg-violet-500"
         icon={<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>}
-        fullWidthMobile={true}
       />
     </div>
   );

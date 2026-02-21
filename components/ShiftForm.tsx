@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Shift } from '../types';
+import { getLocalDateString } from '../utils/date';
 
 interface ShiftFormProps {
   onAdd: (shift: Shift) => void;
@@ -8,7 +9,7 @@ interface ShiftFormProps {
 
 export const ShiftForm: React.FC<ShiftFormProps> = ({ onAdd }) => {
   const [formData, setFormData] = useState<Omit<Shift, 'id'>>({
-    date: new Date().toISOString().split('T')[0],
+    date: getLocalDateString(),
     startTime: '09:00',
     endTime: '17:00',
     breakMinutes: 0,

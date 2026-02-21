@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Shift, Job } from './types';
 import { getAllShifts, addShift, updateShift, deleteShift, getAllJobs, saveJob, deleteJob } from './utils/db';
 import { aggregateStats } from './utils/calculations';
+import { getLocalDateString, isShiftInPaymentMonth } from './utils/date';
 import { StatsCards } from './components/StatsCards';
 import { Calendar } from './components/Calendar';
 import { JobManager } from './components/JobManager';
@@ -15,7 +16,7 @@ const App: React.FC = () => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
@@ -50,10 +51,10 @@ const App: React.FC = () => {
 
   const monthlyShifts = useMemo(() => {
     return shifts.filter(s => {
-      const d = new Date(s.date);
-      return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear();
+      const job = jobs.find(j => j.id === s.jobId);
+      return isShiftInPaymentMonth(s.date, currentDate, job);
     });
-  }, [shifts, currentDate]);
+  }, [shifts, currentDate, jobs]);
 
   const stats = useMemo(() => {
     return aggregateStats(monthlyShifts, jobs, selectedJobIds);
@@ -259,7 +260,7 @@ const App: React.FC = () => {
                 </div>
 
                 <button 
-                  onClick={() => openAddModal(new Date().toISOString().split('T')[0])}
+                  onClick={() => openAddModal(getLocalDateString())}
                   className="bg-blue-600 text-white px-4 py-2 sm:px-6 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-lg shadow-blue-100 dark:shadow-none hover:bg-blue-700 transition-all flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"></path></svg>

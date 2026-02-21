@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Shift, Job } from '../types';
+import { getLocalDateString, isShiftInPaymentMonth } from '../utils/date';
 
 interface CalendarProps {
   currentDate: Date;
@@ -47,10 +48,10 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
         <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
           {currentDate.toLocaleString(undefined, { month: 'long' })} <span className="text-blue-600 dark:text-blue-400">{year}</span>
         </h2>
-        <div className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+        <div className="text-[8px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           {shifts.filter(s => {
-            const d = new Date(s.date);
-            return d.getMonth() === month && d.getFullYear() === year;
+            const job = jobs.find(j => j.id === s.jobId);
+            return isShiftInPaymentMonth(s.date, currentDate, job);
           }).length} Entries this month
         </div>
       </div>
@@ -59,7 +60,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
         {dayNames.map((d, idx) => (
           <div 
             key={d} 
-            className={`py-3 text-center text-xs font-bold uppercase tracking-wider ${idx === 0 || idx === 6 ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}`}
+            className={`py-2 text-center text-[8px] sm:text-xs font-bold uppercase tracking-wider ${idx === 0 || idx === 6 ? 'text-red-500 dark:text-red-400' : 'text-slate-400 dark:text-slate-500'}`}
           >
             {d}
           </div>
@@ -69,26 +70,26 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
         {days.map((day, idx) => {
           const isWeekend = idx % 7 === 0 || idx % 7 === 6;
           
-          if (day === null) return <div key={`empty-${idx}`} className="h-24 sm:h-32 border-r border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40"></div>;
+          if (day === null) return <div key={`empty-${idx}`} className="h-20 sm:h-32 border-r border-b border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40"></div>;
           
           const dayShifts = getShiftsForDay(day);
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-          const isToday = new Date().toISOString().split('T')[0] === dateStr;
+          const isToday = getLocalDateString() === dateStr;
 
           return (
             <div 
               key={day} 
               onClick={() => onDateClick(dateStr)}
-              className={`h-24 sm:h-32 border-r border-b border-slate-100 dark:border-slate-800 p-2 cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors relative overflow-hidden group`}
+              className={`h-20 sm:h-32 border-r border-b border-slate-100 dark:border-slate-800 p-1 sm:p-2 cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors relative overflow-hidden group`}
             >
-              <span className={`text-sm font-bold ${
+              <span className={`text-[10px] sm:text-sm font-bold ${
                 isToday 
-                  ? 'bg-blue-600 dark:bg-blue-500 text-white w-7 h-7 flex items-center justify-center rounded-full shadow-md' 
+                  ? 'bg-blue-600 dark:bg-blue-500 text-white w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-full shadow-md' 
                   : (isWeekend ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-400')
               }`}>
                 {day}
               </span>
-              <div className="mt-1 space-y-1 overflow-y-auto max-h-[calc(100%-1.8rem)] scrollbar-hide">
+              <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1 overflow-y-auto max-h-[calc(100%-1.2rem)] sm:max-h-[calc(100%-1.8rem)] scrollbar-hide">
                 {dayShifts.map((s, i) => {
                   const job = jobs.find(j => j.id === s.jobId);
                   const color = job?.color || (s.type === 'general' ? '#64748b' : '#3b82f6');
@@ -99,7 +100,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
                         e.stopPropagation();
                         onShiftClick(s);
                       }}
-                      className="text-[9px] px-1 py-0.5 rounded border border-white/20 dark:border-black/20 truncate text-white shadow-sm font-bold font-mono hover:scale-105 transition-transform"
+                      className="text-[7px] sm:text-[9px] px-0.5 sm:px-1 py-0 rounded border border-white/20 dark:border-black/20 truncate text-white shadow-sm font-bold font-mono hover:scale-105 transition-transform"
                       style={{ backgroundColor: color }}
                     >
                       {formatTime(s.startTime)} {s.type === 'general' ? (s.title || 'Event') : (job?.name || 'Work')}

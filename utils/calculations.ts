@@ -83,6 +83,7 @@ export const aggregateStats = (shifts: Shift[], jobs: Job[], selectedJobIds?: st
 
   return {
     ...baseStats,
-    totalTransportExpenses: totalTransport
+    totalTransportExpenses: totalTransport,
+    totalEstPay: baseStats.estimatedPay + totalTransport
   };
 };

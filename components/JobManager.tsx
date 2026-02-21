@@ -13,6 +13,8 @@ export const JobManager: React.FC<JobManagerProps> = ({ jobs, onAdd, onDelete })
   const [rate, setRate] = useState<number>(0);
   const [transportFee, setTransportFee] = useState<number>(0);
   const [lateBonus, setLateBonus] = useState<number>(0);
+  const [paymentPeriodType, setPaymentPeriodType] = useState<'month' | 'custom'>('month');
+  const [startDay, setStartDay] = useState<number>(26);
   const [color, setColor] = useState('#3b82f6');
   const [isAdding, setIsAdding] = useState(false);
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
@@ -32,6 +34,8 @@ export const JobManager: React.FC<JobManagerProps> = ({ jobs, onAdd, onDelete })
       hourlyRate: safeRate,
       transportFee: safeTransport,
       lateNightBonusPercent: safeLateBonus,
+      paymentPeriodType,
+      paymentPeriodStartDay: paymentPeriodType === 'custom' ? startDay : undefined,
       color
     });
 
@@ -43,6 +47,8 @@ export const JobManager: React.FC<JobManagerProps> = ({ jobs, onAdd, onDelete })
     setRate(0);
     setTransportFee(0);
     setLateBonus(0);
+    setPaymentPeriodType('month');
+    setStartDay(26);
     setColor('#3b82f6');
     setEditingJobId(null);
     setIsAdding(false);
@@ -53,6 +59,8 @@ export const JobManager: React.FC<JobManagerProps> = ({ jobs, onAdd, onDelete })
     setRate(job.hourlyRate || 0);
     setTransportFee(job.transportFee || 0);
     setLateBonus(job.lateNightBonusPercent || 0);
+    setPaymentPeriodType(job.paymentPeriodType || 'month');
+    setStartDay(job.paymentPeriodStartDay || 26);
     setColor(job.color);
     setEditingJobId(job.id);
     setIsAdding(true);
@@ -130,6 +138,28 @@ export const JobManager: React.FC<JobManagerProps> = ({ jobs, onAdd, onDelete })
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Payment Period</label>
+              <select 
+                value={paymentPeriodType} 
+                onChange={e => setPaymentPeriodType(e.target.value as 'month' | 'custom')}
+                className="w-full text-sm px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-slate-700 dark:text-slate-200"
+              >
+                <option value="month">Calendar Month</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            {paymentPeriodType === 'custom' && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Start Day</label>
+                <input 
+                  type="number" min="1" max="31" value={startDay} onChange={e => setStartDay(Number(e.target.value))}
+                  className="w-full text-sm px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-slate-700 dark:text-slate-200"
+                />
+              </div>
+            )}
+          </div>
           <button type="submit" className="w-full bg-blue-600 dark:bg-blue-500 text-white text-sm font-semibold py-2 rounded-lg mt-2 transition-colors hover:bg-blue-700 dark:hover:bg-blue-600">
             {editingJobId ? 'Update Job' : 'Add Job'}
           </button>
@@ -145,11 +175,14 @@ export const JobManager: React.FC<JobManagerProps> = ({ jobs, onAdd, onDelete })
               <div>
                 <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">{job.name}</p>
                 <div className="flex flex-wrap gap-x-2 gap-y-0.5">
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">{job.hourlyRate}/hr</p>
-                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">Trans: {job.transportFee}/day</p>
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500">{job.hourlyRate}/hr</p>
+                  <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">Trans: {job.transportFee}/day</p>
                   {job.lateNightBonusPercent ? (
-                    <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">Late: +{job.lateNightBonusPercent}%</p>
+                    <p className="text-[9px] text-indigo-500 dark:text-indigo-400 font-medium">Late: +{job.lateNightBonusPercent}%</p>
                   ) : null}
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500">
+                    Period: {job.paymentPeriodType === 'custom' ? `${job.paymentPeriodStartDay} to ${job.paymentPeriodStartDay === 1 ? 'End' : (job.paymentPeriodStartDay || 1) - 1}` : 'Month'}
+                  </p>
                 </div>
               </div>
             </div>
