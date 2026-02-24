@@ -92,7 +92,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
               <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1 overflow-y-auto max-h-[calc(100%-1.2rem)] sm:max-h-[calc(100%-1.8rem)] scrollbar-hide">
                 {dayShifts.map((s, i) => {
                   const job = jobs.find(j => j.id === s.jobId);
-                  const color = job?.color || (s.type === 'general' ? '#64748b' : '#3b82f6');
+                  const color = s.color || job?.color || (s.type === 'general' ? '#64748b' : '#3b82f6');
                   return (
                     <div 
                       key={i} 

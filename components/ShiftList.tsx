@@ -130,7 +130,7 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
                       <div className="flex items-center gap-1.5">
                         {shift.type === 'general' ? (
                           <>
-                            <div className="w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600"></div>
+                            <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: shift.color || '#64748b' }}></div>
                             <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[100px]">{shift.title || 'General Event'}</span>
                           </>
                         ) : job ? (

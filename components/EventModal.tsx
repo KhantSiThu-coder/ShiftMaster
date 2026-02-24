@@ -21,12 +21,13 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     note: '',
     title: '',
     type: 'work',
-    jobId: jobs[0]?.id || ''
+    jobId: jobs[0]?.id || '',
+    color: '#64748b'
   });
 
   useEffect(() => {
     if (initialShift) {
-      setFormData({ ...initialShift, title: initialShift.title || '' });
+      setFormData({ ...initialShift, title: initialShift.title || '', color: initialShift.color || '#64748b' });
     } else {
       setFormData({
         date: selectedDate,
@@ -36,7 +37,8 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         note: '',
         title: '',
         type: 'work',
-        jobId: jobs[0]?.id || ''
+        jobId: jobs[0]?.id || '',
+        color: '#64748b'
       });
     }
   }, [initialShift, selectedDate, jobs, isOpen]);
@@ -152,15 +154,26 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
           </div>
 
           {formData.type === 'general' ? (
-            <div>
-              <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Event Title</label>
-              <input 
-                type="text" 
-                value={formData.title} 
-                onChange={e => setFormData({ ...formData, title: e.target.value })}
-                placeholder="e.g. Doctor appointment"
-                className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm text-slate-700 dark:text-slate-200"
-              />
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2">
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Event Title</label>
+                <input 
+                  type="text" 
+                  value={formData.title} 
+                  onChange={e => setFormData({ ...formData, title: e.target.value })}
+                  placeholder="e.g. Doctor appointment"
+                  className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm text-slate-700 dark:text-slate-200"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Color</label>
+                <input 
+                  type="color" 
+                  value={formData.color} 
+                  onChange={e => setFormData({ ...formData, color: e.target.value })}
+                  className="w-full h-9 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer"
+                />
+              </div>
             </div>
           ) : (
             <div>

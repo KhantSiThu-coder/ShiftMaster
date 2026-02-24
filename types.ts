@@ -22,6 +22,7 @@ export interface Shift {
   title?: string; // Added: title for general entries
   type: EntryType;
   jobId?: string; // Reference to Job
+  color?: string; // Added: custom color for general entries
 }
 
 export interface ShiftStats {
