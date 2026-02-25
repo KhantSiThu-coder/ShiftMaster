@@ -100,9 +100,14 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
                         e.stopPropagation();
                         onShiftClick(s);
                       }}
-                      className="text-[7px] sm:text-[9px] px-0.5 sm:px-1 py-0 rounded border border-white/20 dark:border-black/20 truncate text-white shadow-sm font-bold font-mono hover:scale-105 transition-transform"
+                      className="text-[7px] sm:text-[9px] px-0.5 sm:px-1 py-0 rounded border border-white/20 dark:border-black/20 truncate text-white shadow-sm font-bold font-mono hover:scale-105 transition-transform flex items-center gap-0.5"
                       style={{ backgroundColor: color }}
                     >
+                      {s.photo && (
+                        <svg className="w-2 h-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                        </svg>
+                      )}
                       {formatTime(s.startTime)} {s.type === 'general' ? (s.title || 'Event') : (job?.name || 'Work')}
                     </div>
                   );

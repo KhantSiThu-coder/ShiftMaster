@@ -15,6 +15,7 @@ type ListDisplayMode = 'all' | 'summarize';
 
 export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, onEdit, selectedJobName }) => {
   const [displayMode, setDisplayMode] = useState<ListDisplayMode>('all');
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
 
   // Sort shifts by date ascending, then by time ascending as requested
   const sortedShifts = [...shifts].sort((a, b) => {
@@ -131,7 +132,20 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
                         {shift.type === 'general' ? (
                           <>
                             <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: shift.color || '#64748b' }}></div>
-                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[100px]">{shift.title || 'General Event'}</span>
+                            <div className="flex flex-col gap-1">
+                              <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate max-w-[100px]">{shift.title || 'General Event'}</span>
+                              {shift.photo && (
+                                <div 
+                                  className="w-8 h-8 rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 cursor-zoom-in hover:scale-110 transition-transform"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedPhoto(shift.photo || null);
+                                  }}
+                                >
+                                  <img src={shift.photo} alt="Event" className="w-full h-full object-cover" />
+                                </div>
+                              )}
+                            </div>
                           </>
                         ) : job ? (
                           <>
@@ -168,6 +182,26 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
           </tbody>
         </table>
       </div>
+
+      {expandedPhoto && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300"
+          onClick={() => setExpandedPhoto(null)}
+        >
+          <button 
+            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
+            onClick={() => setExpandedPhoto(null)}
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+          <img 
+            src={expandedPhoto} 
+            alt="Expanded" 
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300" 
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };

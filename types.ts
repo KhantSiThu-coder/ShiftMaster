@@ -23,6 +23,7 @@ export interface Shift {
   type: EntryType;
   jobId?: string; // Reference to Job
   color?: string; // Added: custom color for general entries
+  photo?: string; // Added: base64 photo for general entries
 }
 
 export interface ShiftStats {
