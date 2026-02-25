@@ -132,6 +132,9 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     if (finalData.type === 'general') {
       delete finalData.jobId;
       finalData.breakMinutes = 0;
+    } else {
+      // For work entries, we want to use the job's color, so we remove the custom color
+      delete finalData.color;
     }
     onSave(finalData);
     onClose();
