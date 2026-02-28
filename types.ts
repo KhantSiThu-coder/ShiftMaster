@@ -24,6 +24,7 @@ export interface Shift {
   jobId?: string; // Reference to Job
   color?: string; // Added: custom color for general entries
   photo?: string; // Added: base64 photo for general entries
+  isAllDay?: boolean; // Added: all day event flag
 }
 
 export interface ShiftStats {

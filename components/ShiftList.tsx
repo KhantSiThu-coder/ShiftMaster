@@ -107,16 +107,20 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
                         {new Date(shift.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })},
                       </div>
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-tight mt-0.5">
-                        {formatTime(shift.startTime)}–{formatTime(shift.endTime)}
+                        {shift.isAllDay ? 'All Day' : `${formatTime(shift.startTime)}–${formatTime(shift.endTime)}`}
                       </div>
                     </td>
-                    <td className="px-4 py-3 font-black text-slate-800 dark:text-slate-100 text-[10px]">{total.toFixed(1)}h</td>
+                    <td className="px-4 py-3 font-black text-slate-800 dark:text-slate-100 text-[10px]">
+                      {shift.type === 'work' ? `${total.toFixed(1)}h` : '—'}
+                    </td>
                     
                     {displayMode === 'all' && (
                       <>
-                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-[10px] font-medium">{shift.breakMinutes}m</td>
+                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-[10px] font-medium">
+                          {shift.type === 'work' ? `${shift.breakMinutes}m` : '—'}
+                        </td>
                         <td className="px-4 py-3">
-                          {late > 0 ? (
+                          {shift.type === 'work' && late > 0 ? (
                             <span className="inline-flex items-center px-1.5 py-0.5 rounded-md text-[8px] font-black uppercase tracking-tighter bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/30">
                               {late.toFixed(1)}h late
                             </span>

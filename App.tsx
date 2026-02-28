@@ -22,6 +22,8 @@ const App: React.FC = () => {
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const filterRef = useRef<HTMLDivElement>(null);
 
   const loadData = useCallback(async () => {
@@ -127,20 +129,48 @@ const App: React.FC = () => {
   }, [jobs, selectedJobIds]);
 
   const filteredHistoryShifts = useMemo(() => {
-    if (selectedJobIds.length === 0) return monthlyShifts;
-    return monthlyShifts.filter(s => {
-      if (s.type === 'general') return selectedJobIds.includes('general');
-      return selectedJobIds.includes(s.jobId || '');
-    });
-  }, [monthlyShifts, selectedJobIds]);
+    let base = monthlyShifts;
+    if (selectedJobIds.length > 0) {
+      base = base.filter(s => {
+        if (s.type === 'general') return selectedJobIds.includes('general');
+        return selectedJobIds.includes(s.jobId || '');
+      });
+    }
+    
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      base = base.filter(s => {
+        const titleMatch = s.title?.toLowerCase().includes(query);
+        const noteMatch = s.note?.toLowerCase().includes(query);
+        const jobMatch = s.jobId ? jobs.find(j => j.id === s.jobId)?.name.toLowerCase().includes(query) : false;
+        return titleMatch || noteMatch || jobMatch;
+      });
+    }
+    
+    return base;
+  }, [monthlyShifts, selectedJobIds, searchQuery, jobs]);
 
   const filteredCalendarShifts = useMemo(() => {
-    if (selectedJobIds.length === 0) return shifts;
-    return shifts.filter(s => {
-      if (s.type === 'general') return selectedJobIds.includes('general');
-      return selectedJobIds.includes(s.jobId || '');
-    });
-  }, [shifts, selectedJobIds]);
+    let base = shifts;
+    if (selectedJobIds.length > 0) {
+      base = base.filter(s => {
+        if (s.type === 'general') return selectedJobIds.includes('general');
+        return selectedJobIds.includes(s.jobId || '');
+      });
+    }
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      base = base.filter(s => {
+        const titleMatch = s.title?.toLowerCase().includes(query);
+        const noteMatch = s.note?.toLowerCase().includes(query);
+        const jobMatch = s.jobId ? jobs.find(j => j.id === s.jobId)?.name.toLowerCase().includes(query) : false;
+        return titleMatch || noteMatch || jobMatch;
+      });
+    }
+
+    return base;
+  }, [shifts, selectedJobIds, searchQuery, jobs]);
 
   const toggleJobFilter = (id: string) => {
     setSelectedJobIds(prev => 
@@ -162,6 +192,28 @@ const App: React.FC = () => {
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* Mobile Search Toggle */}
+            <button 
+              onClick={() => setIsSearchOpen(!isSearchOpen)}
+              className="md:hidden p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </button>
+
+            {/* Desktop Search Input */}
+            <div className="hidden md:flex items-center relative">
+              <div className="absolute left-3 text-slate-400">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+              <input 
+                type="text" 
+                placeholder="Search events..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-4 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-slate-700 dark:text-slate-200 w-40 lg:w-60 transition-all"
+              />
+            </div>
+
             {/* Custom Multi-Select Filter */}
             <div className="relative" ref={filterRef}>
               <button 
@@ -214,6 +266,33 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Search Bar */}
+        {isSearchOpen && (
+          <div className="md:hidden mt-3 animate-in slide-in-from-top-2 duration-200">
+            <div className="relative">
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              </div>
+              <input 
+                type="text" 
+                autoFocus
+                placeholder="Search events..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-10 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-slate-700 dark:text-slate-200"
+              />
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">

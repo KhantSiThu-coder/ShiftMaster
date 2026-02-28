@@ -23,12 +23,19 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     type: 'work',
     jobId: jobs[0]?.id || '',
     color: '#64748b',
-    photo: ''
+    photo: '',
+    isAllDay: false
   });
 
   useEffect(() => {
     if (initialShift) {
-      setFormData({ ...initialShift, title: initialShift.title || '', color: initialShift.color || '#64748b', photo: initialShift.photo || '' });
+      setFormData({ 
+        ...initialShift, 
+        title: initialShift.title || '', 
+        color: initialShift.color || '#64748b', 
+        photo: initialShift.photo || '',
+        isAllDay: initialShift.isAllDay || false
+      });
     } else {
       setFormData({
         date: selectedDate,
@@ -40,7 +47,8 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         type: 'work',
         jobId: jobs[0]?.id || '',
         color: '#64748b',
-        photo: ''
+        photo: '',
+        isAllDay: false
       });
     }
   }, [initialShift, selectedDate, jobs, isOpen]);
@@ -67,7 +75,9 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       // Also clear work-specific fields if it's general
       breakMinutes: type === 'general' ? 0 : prev.breakMinutes,
       // Clear photo if switching to work
-      photo: type === 'general' ? prev.photo : ''
+      photo: type === 'general' ? prev.photo : '',
+      // Clear all day if switching to work
+      isAllDay: type === 'general' ? prev.isAllDay : false
     }));
   };
 
@@ -132,6 +142,10 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     if (finalData.type === 'general') {
       delete finalData.jobId;
       finalData.breakMinutes = 0;
+      if (finalData.isAllDay) {
+        finalData.startTime = '00:00';
+        finalData.endTime = '00:00';
+      }
     } else {
       // For work entries, we want to use the job's color, so we remove the custom color
       delete finalData.color;
@@ -213,10 +227,25 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
             </div>
           )}
 
-          <div className="flex gap-4">
-            <TimeSelector label="Start (24h)" value={formData.startTime} type="startTime" />
-            <TimeSelector label="End (24h)" value={formData.endTime} type="endTime" />
-          </div>
+          {formData.type === 'general' && (
+            <div className="flex items-center gap-2 px-1">
+              <input 
+                type="checkbox" 
+                id="isAllDay" 
+                checked={formData.isAllDay} 
+                onChange={e => setFormData({ ...formData, isAllDay: e.target.checked })}
+                className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <label htmlFor="isAllDay" className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer">All Day Event</label>
+            </div>
+          )}
+
+          {!formData.isAllDay && (
+            <div className="flex gap-4">
+              <TimeSelector label="Start (24h)" value={formData.startTime} type="startTime" />
+              <TimeSelector label="End (24h)" value={formData.endTime} type="endTime" />
+            </div>
+          )}
 
           {formData.type === 'work' && (
             <div>
