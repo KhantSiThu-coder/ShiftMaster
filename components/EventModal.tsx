@@ -63,7 +63,17 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
   const handleTimeChange = (type: 'startTime' | 'endTime', part: 'h' | 'm', value: string) => {
     const current = formData[type].split(':');
     const newTime = part === 'h' ? `${value}:${current[1]}` : `${current[0]}:${value}`;
-    setFormData({ ...formData, [type]: newTime });
+    
+    let updatedFormData = { ...formData, [type]: newTime };
+
+    // Ensure endTime is at or after startTime
+    if (type === 'startTime' && newTime > updatedFormData.endTime) {
+      updatedFormData.endTime = newTime;
+    } else if (type === 'endTime' && newTime < updatedFormData.startTime) {
+      updatedFormData.endTime = updatedFormData.startTime;
+    }
+
+    setFormData(updatedFormData);
   };
 
   const handleTypeSwitch = (type: EntryType) => {
@@ -96,8 +106,17 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     setFormData({ ...formData, photo: '' });
   };
 
-  const TimeSelector = ({ label, value, type }: { label: string; value: string; type: 'startTime' | 'endTime' }) => {
+  const TimeSelector = ({ label, value, type, minTime }: { label: string; value: string; type: 'startTime' | 'endTime'; minTime?: string }) => {
     const [h, m] = value.split(':');
+    
+    const allowedHours = minTime 
+      ? hours.filter(hour => hour >= minTime.split(':')[0]) 
+      : hours;
+    
+    const allowedMinutes = (minTime && h === minTime.split(':')[0])
+      ? minutes.filter(min => min >= minTime.split(':')[1])
+      : minutes;
+
     return (
       <div className="flex-1">
         <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">{label}</label>
@@ -107,7 +126,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
             onChange={(e) => handleTimeChange(type, 'h', e.target.value)}
             className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-mono cursor-pointer text-slate-700 dark:text-slate-200"
           >
-            {hours.map(hour => <option key={hour} value={hour}>{hour}</option>)}
+            {allowedHours.map(hour => <option key={hour} value={hour}>{hour}</option>)}
           </select>
           <span className="font-bold text-slate-400 dark:text-slate-600">:</span>
           <select 
@@ -115,7 +134,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
             onChange={(e) => handleTimeChange(type, 'm', e.target.value)}
             className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-mono cursor-pointer text-slate-700 dark:text-slate-200"
           >
-            {minutes.map(min => <option key={min} value={min}>{min}</option>)}
+            {allowedMinutes.map(min => <option key={min} value={min}>{min}</option>)}
           </select>
         </div>
       </div>
@@ -243,7 +262,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
           {!formData.isAllDay && (
             <div className="flex gap-4">
               <TimeSelector label="Start (24h)" value={formData.startTime} type="startTime" />
-              <TimeSelector label="End (24h)" value={formData.endTime} type="endTime" />
+              <TimeSelector label="End (24h)" value={formData.endTime} type="endTime" minTime={formData.startTime} />
             </div>
           )}
 
