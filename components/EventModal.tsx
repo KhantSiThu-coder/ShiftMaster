@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Shift, Job, EntryType } from '../types';
+import { formatLinks } from '../utils/text';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -266,6 +267,14 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
               className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm text-slate-700 dark:text-slate-200"
               rows={2} placeholder="Optional details..."
             />
+            {formData.note && formData.note.includes('http') && (
+              <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1">Link Preview</p>
+                <div className="text-xs text-slate-600 dark:text-slate-300 break-all leading-relaxed italic">
+                  {formatLinks(formData.note, true)}
+                </div>
+              </div>
+            )}
           </div>
 
           {formData.type === 'general' && (

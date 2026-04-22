@@ -2,6 +2,7 @@
 import React from 'react';
 import { Shift, Job } from '../types';
 import { isJapanHoliday } from '../utils/holidays';
+import { formatLinks } from '../utils/text';
 
 interface DayHistoryModalProps {
   isOpen: boolean;
@@ -94,9 +95,9 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
                       </span>
                     </div>
                     {shift.note && (
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate line-clamp-1 italic">
-                        {shift.note}
-                      </p>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-4 italic mt-1 leading-relaxed whitespace-pre-wrap">
+                        {formatLinks(shift.note)}
+                      </div>
                     )}
                   </div>
                   <button className="text-slate-300 dark:text-slate-700 group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">

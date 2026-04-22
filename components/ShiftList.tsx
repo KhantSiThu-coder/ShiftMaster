@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Shift, Job } from '../types';
 import { calculateShiftHours } from '../utils/calculations';
+import { formatLinks } from '../utils/text';
 
 interface ShiftListProps {
   shifts: Shift[];
@@ -160,6 +161,11 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
                           <span className="text-[10px] text-slate-400 dark:text-slate-500 italic">Unassigned Work</span>
                         )}
                       </div>
+                      {shift.note && (
+                        <div className="mt-1.5 text-[9px] text-slate-500 dark:text-slate-400 italic leading-relaxed border-t border-slate-50 dark:border-slate-800/50 pt-1">
+                          {formatLinks(shift.note)}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
