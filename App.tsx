@@ -8,6 +8,7 @@ import { StatsCards } from './components/StatsCards';
 import { Calendar } from './components/Calendar';
 import { JobManager } from './components/JobManager';
 import { EventModal } from './components/EventModal';
+import { DayHistoryModal } from './components/DayHistoryModal';
 import { ShiftList } from './components/ShiftList';
 
 type ViewMode = 'calendar' | 'list';
@@ -18,6 +19,7 @@ const App: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDayHistoryOpen, setIsDayHistoryOpen] = useState(false);
   const [editingShift, setEditingShift] = useState<Shift | null>(null);
   const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('calendar');
@@ -111,13 +113,24 @@ const App: React.FC = () => {
   const openAddModal = (date: string) => {
     setSelectedDate(date);
     setEditingShift(null);
+    setIsDayHistoryOpen(false); // Close history if opening add
     setIsModalOpen(true);
   };
 
   const openEditModal = (shift: Shift) => {
     setEditingShift(shift);
+    setIsDayHistoryOpen(false); // Close history if editing
     setIsModalOpen(true);
   };
+
+  const openDayHistory = (date: string) => {
+    setSelectedDate(date);
+    setIsDayHistoryOpen(true);
+  };
+
+  const dayShiftsForModal = useMemo(() => {
+    return shifts.filter(s => s.date === selectedDate).sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
+  }, [shifts, selectedDate]);
 
   const activeFilterName = useMemo(() => {
     if (selectedJobIds.length === 0) return undefined;
@@ -355,8 +368,8 @@ const App: React.FC = () => {
                   currentDate={currentDate} 
                   shifts={filteredCalendarShifts} 
                   jobs={jobs}
-                  onDateClick={openAddModal}
-                  onShiftClick={openEditModal}
+                  onDateClick={openDayHistory}
+                  onShiftClick={(shift) => openDayHistory(shift.date)}
                 />
                 <ShiftList 
                   shifts={filteredHistoryShifts} 
@@ -403,6 +416,16 @@ const App: React.FC = () => {
         selectedDate={selectedDate}
         jobs={jobs}
         initialShift={editingShift}
+      />
+
+      <DayHistoryModal
+        isOpen={isDayHistoryOpen}
+        onClose={() => setIsDayHistoryOpen(false)}
+        date={selectedDate}
+        dayShifts={dayShiftsForModal}
+        jobs={jobs}
+        onAddEntry={openAddModal}
+        onEditEntry={openEditModal}
       />
 
       <footer className="mt-12 mb-8 flex justify-center px-4">
