@@ -262,7 +262,7 @@ const App: React.FC = () => {
             </div>
 
             <div className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-tighter bg-slate-100 dark:bg-slate-800 px-2 sm:px-3 py-1.5 rounded-full whitespace-nowrap">
-              {new Date().toLocaleString(undefined, { day: 'numeric', month: 'short' })}
+              {new Date().toLocaleString('ja-JP', { month: 'short', day: 'numeric' })}
             </div>
           </div>
         </div>

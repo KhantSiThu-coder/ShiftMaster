@@ -2,6 +2,7 @@
 import React from 'react';
 import { Shift, Job } from '../types';
 import { getLocalDateString, isShiftInPaymentMonth } from '../utils/date';
+import { isJapanHoliday } from '../utils/holidays';
 
 interface CalendarProps {
   currentDate: Date;
@@ -40,13 +41,13 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
     return `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
   };
 
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden transition-colors duration-300">
       <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/30 dark:bg-slate-800/30">
         <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 tracking-tight">
-          {currentDate.toLocaleString(undefined, { month: 'long' })} <span className="text-blue-600 dark:text-blue-400">{year}</span>
+          <span className="text-blue-600 dark:text-blue-400">{year}年</span> {month + 1}月
         </h2>
         <div className="text-[8px] sm:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           {shifts.filter(s => {
@@ -75,6 +76,7 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
           const dayShifts = getShiftsForDay(day);
           const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
           const isToday = getLocalDateString() === dateStr;
+          const holiday = isJapanHoliday(dateStr);
 
           return (
             <div 
@@ -82,13 +84,20 @@ export const Calendar: React.FC<CalendarProps> = ({ currentDate, onDateClick, on
               onClick={() => onDateClick(dateStr)}
               className={`h-20 sm:h-32 border-r border-b border-slate-100 dark:border-slate-800 p-1 sm:p-2 cursor-pointer hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors relative overflow-hidden group`}
             >
-              <span className={`text-[10px] sm:text-sm font-bold ${
-                isToday 
-                  ? 'bg-blue-600 dark:bg-blue-500 text-white w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-full shadow-md' 
-                  : (isWeekend ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-400')
-              }`}>
-                {day}
-              </span>
+              <div className="flex flex-col">
+                <span className={`text-[10px] sm:text-sm font-bold ${
+                  isToday 
+                    ? 'bg-blue-600 dark:bg-blue-500 text-white w-5 h-5 sm:w-7 sm:h-7 flex items-center justify-center rounded-full shadow-md' 
+                    : (holiday || isWeekend ? 'text-red-500 dark:text-red-400' : 'text-slate-600 dark:text-slate-400')
+                }`}>
+                  {day}
+                </span>
+                {holiday && (
+                  <span className="text-[6px] sm:text-[8px] text-red-500 dark:text-red-400 truncate font-bold mt-0.5">
+                    {holiday.name}
+                  </span>
+                )}
+              </div>
               <div className="mt-0.5 sm:mt-1 space-y-0.5 sm:space-y-1 overflow-y-auto max-h-[calc(100%-1.2rem)] sm:max-h-[calc(100%-1.8rem)] scrollbar-hide">
                 {dayShifts.map((s, i) => {
                   const job = jobs.find(j => j.id === s.jobId);
