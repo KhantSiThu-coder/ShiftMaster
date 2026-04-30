@@ -22,7 +22,7 @@ export const StatsCards: React.FC<{ stats: ShiftStats }> = ({ stats }) => {
     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
       <StatCard 
         title="Work Hours" 
-        value={`${stats.totalHours.toFixed(1)}h`} 
+        value={`${stats.totalHours.toFixed(1)}h (${(stats.totalHours / 4).toFixed(1)}h avg)`} 
         sub="Total"
         color="bg-blue-600 dark:bg-blue-500"
         icon={<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
