@@ -14,18 +14,25 @@ interface EventModalProps {
 }
 
 export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave, onDelete, selectedDate, jobs, initialShift }) => {
-  const [formData, setFormData] = useState<Shift>({
-    date: selectedDate,
-    startTime: '09:00',
-    endTime: '17:00',
-    breakMinutes: 0,
-    note: '',
-    title: '',
-    type: 'work',
-    jobId: jobs[0]?.id || '',
-    color: '#64748b',
-    photo: '',
-    isAllDay: false
+  const [formData, setFormData] = useState<Shift>(() => {
+    const lastJobId = localStorage.getItem('shiftmaster_last_jobId');
+    const validJobId = (lastJobId && jobs.some(j => j.id === lastJobId)) ? lastJobId : (jobs[0]?.id || '');
+    const lastStartTime = localStorage.getItem('shiftmaster_last_startTime') || '09:00';
+    const lastEndTime = localStorage.getItem('shiftmaster_last_endTime') || '17:00';
+
+    return {
+      date: selectedDate,
+      startTime: lastStartTime,
+      endTime: lastEndTime,
+      breakMinutes: 0,
+      note: '',
+      title: '',
+      type: 'work',
+      jobId: validJobId,
+      color: '#64748b',
+      photo: '',
+      isAllDay: false
+    };
   });
 
   useEffect(() => {
@@ -38,15 +45,20 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         isAllDay: initialShift.isAllDay || false
       });
     } else {
+      const lastJobId = localStorage.getItem('shiftmaster_last_jobId');
+      const validJobId = (lastJobId && jobs.some(j => j.id === lastJobId)) ? lastJobId : (jobs[0]?.id || '');
+      const lastStartTime = localStorage.getItem('shiftmaster_last_startTime') || '09:00';
+      const lastEndTime = localStorage.getItem('shiftmaster_last_endTime') || '17:00';
+
       setFormData({
         date: selectedDate,
-        startTime: '09:00',
-        endTime: '17:00',
+        startTime: lastStartTime,
+        endTime: lastEndTime,
         breakMinutes: 0,
         note: '',
         title: '',
         type: 'work',
-        jobId: jobs[0]?.id || '',
+        jobId: validJobId,
         color: '#64748b',
         photo: '',
         isAllDay: false
@@ -142,6 +154,18 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     e.preventDefault();
     // Final check to ensure consistency before saving
     const finalData = { ...formData };
+
+    // Save selected values to persist for future additions
+    if (formData.jobId) {
+      localStorage.setItem('shiftmaster_last_jobId', formData.jobId);
+    }
+    if (formData.startTime) {
+      localStorage.setItem('shiftmaster_last_startTime', formData.startTime);
+    }
+    if (formData.endTime) {
+      localStorage.setItem('shiftmaster_last_endTime', formData.endTime);
+    }
+
     if (finalData.type === 'general') {
       delete finalData.jobId;
       finalData.breakMinutes = 0;
