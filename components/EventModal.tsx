@@ -31,17 +31,20 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       jobId: validJobId,
       color: '#64748b',
       photo: '',
+      photos: [],
       isAllDay: false
     };
   });
 
   useEffect(() => {
     if (initialShift) {
+      const initialPhotos = initialShift.photos || (initialShift.photo ? [initialShift.photo] : []);
       setFormData({ 
         ...initialShift, 
         title: initialShift.title || '', 
         color: initialShift.color || '#64748b', 
         photo: initialShift.photo || '',
+        photos: initialPhotos,
         isAllDay: initialShift.isAllDay || false
       });
     } else {
@@ -61,12 +64,13 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         jobId: validJobId,
         color: '#64748b',
         photo: '',
+        photos: [],
         isAllDay: false
       });
     }
   }, [initialShift, selectedDate, jobs, isOpen]);
 
-  const [isPhotoExpanded, setIsPhotoExpanded] = useState(false);
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -90,24 +94,48 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       breakMinutes: type === 'general' ? 0 : prev.breakMinutes,
       // Clear photo if switching to work
       photo: type === 'general' ? prev.photo : '',
+      photos: type === 'general' ? prev.photos : [],
       // Clear all day if switching to work
       isAllDay: type === 'general' ? prev.isAllDay : false
     }));
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData({ ...formData, photo: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newPhotos: string[] = [];
+      let loadedCount = 0;
+      const fileList = Array.from(files);
+      
+      fileList.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            newPhotos.push(reader.result);
+          }
+          loadedCount++;
+          if (loadedCount === fileList.length) {
+            setFormData(prev => ({
+              ...prev,
+              photos: [...(prev.photos || []), ...newPhotos]
+            }));
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
   };
 
-  const removePhoto = () => {
-    setFormData({ ...formData, photo: '' });
+  const removePhotoAtIndex = (index: number) => {
+    setFormData(prev => {
+      const currentPhotos = prev.photos || (prev.photo ? [prev.photo] : []);
+      const updatedPhotos = currentPhotos.filter((_, idx) => idx !== index);
+      return {
+        ...prev,
+        photo: updatedPhotos[0] || '',
+        photos: updatedPhotos
+      };
+    });
   };
 
   const TimeSelector = ({ label, value, type }: { label: string; value: string; type: 'startTime' | 'endTime' }) => {
@@ -173,6 +201,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         finalData.startTime = '00:00';
         finalData.endTime = '00:00';
       }
+      finalData.photo = finalData.photos && finalData.photos.length > 0 ? finalData.photos[0] : '';
     } else {
       // For work entries, we want to use the job's color, so we remove the custom color
       delete finalData.color;
@@ -304,44 +333,48 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
 
             {formData.type === 'general' && (
               <div>
-                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Photo</label>
-                {formData.photo ? (
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 group/photo">
-                    <img 
-                      src={formData.photo} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover cursor-zoom-in transition-transform hover:scale-105" 
-                      onClick={() => setIsPhotoExpanded(true)}
-                    />
-                    <button 
-                      type="button" 
-                      onClick={removePhoto}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors z-10"
+                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Photos</label>
+                
+                <div className="grid grid-cols-3 gap-2">
+                  {(formData.photos || []).map((photoUrl, index) => (
+                    <div 
+                      key={index} 
+                      className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 group/photo"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                      <img 
+                        src={photoUrl} 
+                        alt={`Preview ${index + 1}`} 
+                        className="w-full h-full object-cover cursor-zoom-in transition-transform hover:scale-105" 
+                        onClick={() => setExpandedPhoto(photoUrl)}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => removePhotoAtIndex(index)}
+                        className="absolute top-1.5 right-1.5 p-1 bg-red-500 text-white rounded-full shadow hover:bg-red-600 transition-colors z-10"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                      </button>
                     </div>
-                  </div>
-                ) : (
-                  <div className="relative">
+                  ))}
+                  
+                  <div className="relative aspect-square">
                     <input 
                       type="file" 
                       accept="image/*" 
+                      multiple
                       onChange={handlePhotoChange}
                       className="hidden" 
                       id="photo-upload"
                     />
                     <label 
                       htmlFor="photo-upload"
-                      className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      className="flex flex-col items-center justify-center w-full h-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                     >
-                      <svg className="w-6 h-6 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Upload Photo</span>
+                      <svg className="w-5 h-5 text-slate-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
+                      <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center px-1">Add Photo</span>
                     </label>
                   </div>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -363,19 +396,19 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         </form>
       </div>
 
-      {isPhotoExpanded && formData.photo && (
+      {expandedPhoto && (
         <div 
           className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-8 bg-slate-950/90 backdrop-blur-md animate-in fade-in duration-300"
-          onClick={() => setIsPhotoExpanded(false)}
+          onClick={() => setExpandedPhoto(null)}
         >
           <button 
             className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors"
-            onClick={() => setIsPhotoExpanded(false)}
+            onClick={() => setExpandedPhoto(null)}
           >
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
           </button>
           <img 
-            src={formData.photo} 
+            src={expandedPhoto} 
             alt="Expanded" 
             className="max-w-full max-h-full object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-300" 
             onClick={(e) => e.stopPropagation()}
