@@ -19,6 +19,10 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     const validJobId = (lastJobId && jobs.some(j => j.id === lastJobId)) ? lastJobId : (jobs[0]?.id || '');
     const lastStartTime = localStorage.getItem('shiftmaster_last_startTime') || '09:00';
     const lastEndTime = localStorage.getItem('shiftmaster_last_endTime') || '17:00';
+    const lastPaidLeaveHours = localStorage.getItem('shiftmaster_last_paidLeaveHours');
+    const defaultPaidLeaveHours = lastPaidLeaveHours !== null ? parseInt(lastPaidLeaveHours) : 8;
+    const lastPaidLeaveMinutes = localStorage.getItem('shiftmaster_last_paidLeaveMinutes');
+    const defaultPaidLeaveMinutes = lastPaidLeaveMinutes !== null ? parseInt(lastPaidLeaveMinutes) : 0;
 
     return {
       date: selectedDate,
@@ -32,7 +36,10 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       color: '#64748b',
       photo: '',
       photos: [],
-      isAllDay: false
+      isAllDay: false,
+      isPaidLeave: false,
+      paidLeaveHours: defaultPaidLeaveHours,
+      paidLeaveMinutes: defaultPaidLeaveMinutes
     };
   });
 
@@ -45,13 +52,20 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         color: initialShift.color || '#64748b', 
         photo: initialShift.photo || '',
         photos: initialPhotos,
-        isAllDay: initialShift.isAllDay || false
+        isAllDay: initialShift.isAllDay || false,
+        isPaidLeave: initialShift.isPaidLeave || false,
+        paidLeaveHours: initialShift.paidLeaveHours !== undefined ? initialShift.paidLeaveHours : 8,
+        paidLeaveMinutes: initialShift.paidLeaveMinutes !== undefined ? initialShift.paidLeaveMinutes : 0
       });
     } else {
       const lastJobId = localStorage.getItem('shiftmaster_last_jobId');
       const validJobId = (lastJobId && jobs.some(j => j.id === lastJobId)) ? lastJobId : (jobs[0]?.id || '');
       const lastStartTime = localStorage.getItem('shiftmaster_last_startTime') || '09:00';
       const lastEndTime = localStorage.getItem('shiftmaster_last_endTime') || '17:00';
+      const lastPaidLeaveHours = localStorage.getItem('shiftmaster_last_paidLeaveHours');
+      const defaultPaidLeaveHours = lastPaidLeaveHours !== null ? parseInt(lastPaidLeaveHours) : 8;
+      const lastPaidLeaveMinutes = localStorage.getItem('shiftmaster_last_paidLeaveMinutes');
+      const defaultPaidLeaveMinutes = lastPaidLeaveMinutes !== null ? parseInt(lastPaidLeaveMinutes) : 0;
 
       setFormData({
         date: selectedDate,
@@ -65,7 +79,10 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         color: '#64748b',
         photo: '',
         photos: [],
-        isAllDay: false
+        isAllDay: false,
+        isPaidLeave: false,
+        paidLeaveHours: defaultPaidLeaveHours,
+        paidLeaveMinutes: defaultPaidLeaveMinutes
       });
     }
   }, [initialShift, selectedDate, jobs, isOpen]);
@@ -96,7 +113,8 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       photo: type === 'general' ? prev.photo : '',
       photos: type === 'general' ? prev.photos : [],
       // Clear all day if switching to work
-      isAllDay: type === 'general' ? prev.isAllDay : false
+      isAllDay: type === 'general' ? prev.isAllDay : false,
+      isPaidLeave: type === 'general' ? false : prev.isPaidLeave
     }));
   };
 
@@ -193,6 +211,12 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     if (formData.endTime) {
       localStorage.setItem('shiftmaster_last_endTime', formData.endTime);
     }
+    if (formData.paidLeaveHours !== undefined) {
+      localStorage.setItem('shiftmaster_last_paidLeaveHours', String(formData.paidLeaveHours));
+    }
+    if (formData.paidLeaveMinutes !== undefined) {
+      localStorage.setItem('shiftmaster_last_paidLeaveMinutes', String(formData.paidLeaveMinutes));
+    }
 
     if (finalData.type === 'general') {
       delete finalData.jobId;
@@ -205,6 +229,9 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     } else {
       // For work entries, we want to use the job's color, so we remove the custom color
       delete finalData.color;
+      if (finalData.isPaidLeave) {
+        finalData.breakMinutes = 0;
+      }
     }
     onSave(finalData);
     onClose();
@@ -271,16 +298,33 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
                 </div>
               </div>
             ) : (
-              <div>
-                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Select Job</label>
-                <select 
-                  value={formData.jobId || ''}
-                  onChange={e => setFormData({ ...formData, jobId: e.target.value })}
-                  className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-200"
-                >
-                  {jobs.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
-                  {jobs.length === 0 && <option value="">No jobs defined</option>}
-                </select>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Select Job</label>
+                  <select 
+                    value={formData.jobId || ''}
+                    onChange={e => setFormData({ ...formData, jobId: e.target.value })}
+                    className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-medium cursor-pointer text-slate-700 dark:text-slate-200"
+                  >
+                    {jobs.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
+                    {jobs.length === 0 && <option value="">No jobs defined</option>}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2 px-1">
+                  <input 
+                    type="checkbox" 
+                    id="isPaidLeave" 
+                    checked={formData.isPaidLeave || false} 
+                    onChange={e => setFormData({ 
+                      ...formData, 
+                      isPaidLeave: e.target.checked,
+                      breakMinutes: e.target.checked ? 0 : formData.breakMinutes
+                    })}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="isPaidLeave" className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer">Paid Leave</label>
+                </div>
               </div>
             )}
 
@@ -297,14 +341,52 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
               </div>
             )}
 
-            {!formData.isAllDay && (
+            {!formData.isAllDay && !formData.isPaidLeave && (
               <div className="flex gap-4">
                 <TimeSelector label="Start (24h)" value={formData.startTime} type="startTime" />
                 <TimeSelector label="End (24h)" value={formData.endTime} type="endTime" />
               </div>
             )}
 
-            {formData.type === 'work' && (
+            {formData.type === 'work' && formData.isPaidLeave && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Paid Leave Hours</label>
+                  <select 
+                    value={formData.paidLeaveHours !== undefined ? formData.paidLeaveHours : 8}
+                    onChange={e => setFormData({ ...formData, paidLeaveHours: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-mono cursor-pointer text-slate-700 dark:text-slate-200"
+                  >
+                    {formData.paidLeaveHours !== undefined && formData.paidLeaveHours > 8 && (
+                      <option value={formData.paidLeaveHours} disabled hidden>
+                        {String(formData.paidLeaveHours).padStart(2, '0')}
+                      </option>
+                    )}
+                    {Array.from({ length: 9 }, (_, i) => i).map(h => (
+                      <option key={h} value={h}>
+                        {String(h).padStart(2, '0')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Paid Leave Minutes</label>
+                  <select 
+                    value={formData.paidLeaveMinutes !== undefined ? formData.paidLeaveMinutes : 0}
+                    onChange={e => setFormData({ ...formData, paidLeaveMinutes: parseInt(e.target.value) || 0 })}
+                    className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-mono cursor-pointer text-slate-700 dark:text-slate-200"
+                  >
+                    {Array.from({ length: 60 }, (_, i) => i).map(m => (
+                      <option key={m} value={m}>
+                        {String(m).padStart(2, '0')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
+            {formData.type === 'work' && !formData.isPaidLeave && (
               <div>
                 <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Break (mins)</label>
                 <input 

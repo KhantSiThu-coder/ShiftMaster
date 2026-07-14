@@ -108,17 +108,26 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
                         {new Date(shift.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })},
                       </div>
                       <div className="text-[10px] text-slate-500 dark:text-slate-400 font-mono tracking-tight mt-0.5">
-                        {shift.isAllDay ? 'All Day' : `${formatTime(shift.startTime)}–${formatTime(shift.endTime)}`}
+                        {shift.isPaidLeave ? 'Paid Leave Duration' : (shift.isAllDay ? 'All Day' : `${formatTime(shift.startTime)}–${formatTime(shift.endTime)}`)}
                       </div>
                     </td>
                     <td className="px-4 py-3 font-black text-slate-800 dark:text-slate-100 text-[10px]">
-                      {shift.type === 'work' ? `${total.toFixed(1)}h` : '—'}
+                      {shift.type === 'work' ? (
+                        shift.isPaidLeave ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span>{total.toFixed(1)}h</span>
+                            <span className="text-[8px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-wider">Paid Leave</span>
+                          </div>
+                        ) : (
+                          `${total.toFixed(1)}h`
+                        )
+                      ) : '—'}
                     </td>
                     
                     {displayMode === 'all' && (
                       <>
                         <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-[10px] font-medium">
-                          {shift.type === 'work' ? `${shift.breakMinutes}m` : '—'}
+                          {shift.type === 'work' ? (shift.isPaidLeave ? '—' : `${shift.breakMinutes}m`) : '—'}
                         </td>
                         <td className="px-4 py-3">
                           {shift.type === 'work' && late > 0 ? (

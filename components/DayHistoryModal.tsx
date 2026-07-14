@@ -3,6 +3,7 @@ import React from 'react';
 import { Shift, Job } from '../types';
 import { isJapanHoliday } from '../utils/holidays';
 import { formatLinks } from '../utils/text';
+import { calculateShiftHours } from '../utils/calculations';
 
 interface DayHistoryModalProps {
   isOpen: boolean;
@@ -77,6 +78,7 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
               const color = shift.type === 'general' 
                 ? (shift.color || '#64748b') 
                 : (job?.color || '#3b82f6');
+              const { total } = calculateShiftHours(shift);
               
               return (
                 <div 
@@ -87,11 +89,16 @@ export const DayHistoryModal: React.FC<DayHistoryModalProps> = ({
                   <div className="w-1.5 h-10 rounded-full flex-shrink-0" style={{ backgroundColor: color }}></div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-0.5">
-                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate">
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200 truncate flex items-center gap-1.5">
                         {shift.type === 'general' ? (shift.title || 'General Event') : (job?.name || 'Work')}
+                        {shift.isPaidLeave && (
+                          <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-900/30 rounded-md flex-shrink-0">
+                            Paid Leave
+                          </span>
+                        )}
                       </p>
                       <span className="text-[10px] font-mono font-black text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-100 dark:border-slate-800 group-hover:border-blue-100 dark:group-hover:border-blue-900/30 transition-colors">
-                        {shift.isAllDay ? 'ALL DAY' : `${formatTime(shift.startTime)} - ${formatTime(shift.endTime)}`}
+                        {shift.isPaidLeave ? `${total.toFixed(1)}h` : (shift.isAllDay ? 'ALL DAY' : `${formatTime(shift.startTime)} - ${formatTime(shift.endTime)}`)}
                       </span>
                     </div>
                     {shift.note && (

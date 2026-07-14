@@ -7,6 +7,14 @@ const timeToMinutes = (time: string): number => {
 };
 
 export const calculateShiftHours = (shift: Shift): { total: number; late: number } => {
+  if (shift.isPaidLeave) {
+    const totalHours = (shift.paidLeaveHours || 0) + (shift.paidLeaveMinutes || 0) / 60;
+    return {
+      total: totalHours,
+      late: 0
+    };
+  }
+
   let startMin = timeToMinutes(shift.startTime);
   let endMin = timeToMinutes(shift.endTime);
   
@@ -43,7 +51,7 @@ export const aggregateStats = (shifts: Shift[], jobs: Job[], selectedJobIds?: st
   // Calculate transport fees: once per job per day
   const dailyWorkMap = new Map<string, Set<string>>(); // date -> Set<jobId>
   filteredShifts.forEach(s => {
-    if (s.jobId) {
+    if (s.jobId && !s.isPaidLeave) {
       if (!dailyWorkMap.has(s.date)) {
         dailyWorkMap.set(s.date, new Set());
       }
@@ -71,14 +79,33 @@ export const aggregateStats = (shifts: Shift[], jobs: Job[], selectedJobIds?: st
       const basePay = total * rate;
       const lateBonusPay = late * rate * bonusPct;
       
-      return {
-        totalHours: acc.totalHours + total,
-        totalDays: acc.totalDays + 1,
-        lateNightHours: acc.lateNightHours + late,
-        estimatedPay: acc.estimatedPay + basePay + lateBonusPay,
-      };
+      if (shift.isPaidLeave) {
+        return {
+          ...acc,
+          totalPaidLeaveHours: acc.totalPaidLeaveHours + total,
+          totalPaidLeaveDays: acc.totalPaidLeaveDays + 1,
+          totalPaidLeavePay: acc.totalPaidLeavePay + basePay,
+          estimatedPay: acc.estimatedPay + basePay,
+        };
+      } else {
+        return {
+          ...acc,
+          totalHours: acc.totalHours + total,
+          totalDays: acc.totalDays + 1,
+          lateNightHours: acc.lateNightHours + late,
+          estimatedPay: acc.estimatedPay + basePay + lateBonusPay,
+        };
+      }
     },
-    { totalHours: 0, totalDays: 0, lateNightHours: 0, estimatedPay: 0 }
+    { 
+      totalHours: 0, 
+      totalDays: 0, 
+      lateNightHours: 0, 
+      estimatedPay: 0,
+      totalPaidLeaveHours: 0,
+      totalPaidLeaveDays: 0,
+      totalPaidLeavePay: 0,
+    }
   );
 
   return {

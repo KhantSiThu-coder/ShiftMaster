@@ -26,6 +26,9 @@ export interface Shift {
   photo?: string; // Added: base64 photo for general entries
   photos?: string[]; // Added: multiple base64 photos for general entries
   isAllDay?: boolean; // Added: all day event flag
+  isPaidLeave?: boolean; // Added: Paid Leave flag
+  paidLeaveHours?: number; // Added: Paid Leave hours duration
+  paidLeaveMinutes?: number; // Added: Paid Leave minutes duration
 }
 
 export interface ShiftStats {
@@ -35,4 +38,7 @@ export interface ShiftStats {
   estimatedPay: number;
   totalTransportExpenses: number;
   totalEstPay: number;
+  totalPaidLeaveHours?: number; // Added: Paid Leave hours summary
+  totalPaidLeaveDays?: number; // Added: Paid Leave days summary
+  totalPaidLeavePay?: number; // Added: Paid Leave pay summary
 }
