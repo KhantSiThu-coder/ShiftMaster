@@ -430,7 +430,7 @@ const App: React.FC = () => {
 
       <footer className="mt-12 mb-8 flex justify-center px-4">
         <a 
-          href="https://eikhaingphyo-portfolio.vercel.app/" 
+          href="https://click.ecc.ac.jp/ecc/khant_si_thu/portfolio/" 
           target="_blank" 
           rel="noopener noreferrer"
           className="flex items-center gap-2 text-[#6b7280] dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 transition-all group"

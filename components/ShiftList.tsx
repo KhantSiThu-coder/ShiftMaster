@@ -98,8 +98,8 @@ export const ShiftList: React.FC<ShiftListProps> = ({ shifts, jobs, onDelete, on
               </tr>
             ) : (
               sortedShifts.map((shift) => {
-                const { total, late } = calculateShiftHours(shift);
                 const job = jobs.find(j => j.id === shift.jobId);
+                const { total, late } = calculateShiftHours(shift, job);
                 
                 return (
                   <tr key={shift.id} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/30 transition-colors group">

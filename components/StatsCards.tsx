@@ -1,8 +1,16 @@
 
 import React from 'react';
 import { ShiftStats } from '../types';
+import { formatHoursAndMinutes } from '../utils/calculations';
 
-const StatCard: React.FC<{ title: string; value: string | number; sub: string; icon: React.ReactNode; color: string; fullWidthMobile?: boolean }> = ({ title, value, sub, icon, color, fullWidthMobile }) => (
+const StatCard: React.FC<{ 
+  title: string; 
+  value: React.ReactNode; 
+  sub?: React.ReactNode; 
+  icon: React.ReactNode; 
+  color: string; 
+  fullWidthMobile?: boolean 
+}> = ({ title, value, sub, icon, color, fullWidthMobile }) => (
   <div className={`bg-white dark:bg-slate-900 p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center space-x-1.5 sm:space-x-2.5 transition-colors duration-300 ${fullWidthMobile ? 'col-span-2 sm:col-span-1' : ''}`}>
     <div className={`p-1 sm:p-2 rounded-lg sm:rounded-xl ${color} text-white shadow-md flex-shrink-0`}>
       {React.isValidElement(icon) ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { 
@@ -11,8 +19,8 @@ const StatCard: React.FC<{ title: string; value: string | number; sub: string; i
     </div>
     <div className="min-w-0 flex-1">
       <p className="text-[7px] sm:text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-none mb-0.5 truncate">{title}</p>
-      <h3 className="text-[10px] sm:text-sm font-black text-slate-800 dark:text-slate-100 leading-none truncate">{value}</h3>
-      <p className="text-[7px] sm:text-[8px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium truncate">{sub}</p>
+      <h3 className="text-[10px] sm:text-xs lg:text-sm font-black text-slate-800 dark:text-slate-100 leading-tight truncate">{value}</h3>
+      {sub && <p className="text-[7px] sm:text-[8px] text-slate-400 dark:text-slate-500 mt-0.5 font-medium truncate">{sub}</p>}
     </div>
   </div>
 );
@@ -24,8 +32,8 @@ export const StatsCards: React.FC<{ stats: ShiftStats }> = ({ stats }) => {
     <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 ${hasPaidLeave ? 'xl:grid-cols-7' : ''} gap-3 sm:gap-4 mb-6 sm:mb-8`}>
       <StatCard 
         title="Work Hours" 
-        value={`${stats.totalHours.toFixed(1)}h (${(stats.totalHours / 4).toFixed(1)}h avg)`} 
-        sub="Total"
+        value={formatHoursAndMinutes(stats.totalHours)} 
+        sub={`(${formatHoursAndMinutes(stats.totalHours / 4)})`}
         color="bg-blue-600 dark:bg-blue-500"
         icon={<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>}
       />

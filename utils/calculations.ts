@@ -6,7 +6,14 @@ const timeToMinutes = (time: string): number => {
   return hours * 60 + minutes;
 };
 
-export const calculateShiftHours = (shift: Shift): { total: number; late: number } => {
+export const formatHoursAndMinutes = (decimalHours: number): string => {
+  const totalMinutes = Math.round(Math.max(0, decimalHours) * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours} hrs ${minutes} mins`;
+};
+
+export const calculateShiftHours = (shift: Shift, job?: Job): { total: number; late: number } => {
   if (shift.isPaidLeave) {
     const totalHours = (shift.paidLeaveHours || 0) + (shift.paidLeaveMinutes || 0) / 60;
     return {
@@ -33,9 +40,12 @@ export const calculateShiftHours = (shift: Shift): { total: number; late: number
     lateDurationMin = endMin - actualLateStart;
   }
 
+  const rawLate = Math.max(0, lateDurationMin / 60);
+  const isLateEligible = job !== undefined ? (job.lateNightBonusPercent || 0) > 0 : true;
+
   return {
     total: totalHours,
-    late: Math.max(0, lateDurationMin / 60)
+    late: isLateEligible ? rawLate : 0
   };
 };
 
@@ -71,10 +81,11 @@ export const aggregateStats = (shifts: Shift[], jobs: Job[], selectedJobIds?: st
 
   const baseStats = filteredShifts.reduce(
     (acc, shift) => {
-      const { total, late } = calculateShiftHours(shift);
       const job = jobs.find(j => j.id === shift.jobId);
+      const { total, late } = calculateShiftHours(shift, job);
       const rate = job?.hourlyRate || 0;
-      const bonusPct = (job?.lateNightBonusPercent || 0) / 100;
+      const lateBonusPercent = job?.lateNightBonusPercent || 0;
+      const bonusPct = lateBonusPercent / 100;
       
       const basePay = total * rate;
       const lateBonusPay = late * rate * bonusPct;
@@ -88,11 +99,12 @@ export const aggregateStats = (shifts: Shift[], jobs: Job[], selectedJobIds?: st
           estimatedPay: acc.estimatedPay + basePay,
         };
       } else {
+        const eligibleLateHours = lateBonusPercent > 0 ? late : 0;
         return {
           ...acc,
           totalHours: acc.totalHours + total,
           totalDays: acc.totalDays + 1,
-          lateNightHours: acc.lateNightHours + late,
+          lateNightHours: acc.lateNightHours + eligibleLateHours,
           estimatedPay: acc.estimatedPay + basePay + lateBonusPay,
         };
       }
