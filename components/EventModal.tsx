@@ -2,6 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { Shift, Job, EntryType } from '../types';
 import { formatLinks } from '../utils/text';
+import { 
+  calculateShiftHours, 
+  formatBreakDuration, 
+  formatTotalWorkHoursText, 
+  getBreakStartHourOptions, 
+  getBreakStartMinuteOptions, 
+  getBreakEndHourOptions, 
+  getBreakEndMinuteOptions, 
+  sanitizeBreakTimes,
+  timeToMinutes,
+  offsetToTimeStr
+} from '../utils/calculations';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -23,12 +35,16 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     const defaultPaidLeaveHours = lastPaidLeaveHours !== null ? parseInt(lastPaidLeaveHours) : 8;
     const lastPaidLeaveMinutes = localStorage.getItem('shiftmaster_last_paidLeaveMinutes');
     const defaultPaidLeaveMinutes = lastPaidLeaveMinutes !== null ? parseInt(lastPaidLeaveMinutes) : 0;
+    const defaultBreak = sanitizeBreakTimes(lastStartTime, lastEndTime);
 
     return {
       date: selectedDate,
       startTime: lastStartTime,
       endTime: lastEndTime,
       breakMinutes: 0,
+      hasBreak: false,
+      breakStartTime: defaultBreak.breakStartTime,
+      breakEndTime: defaultBreak.breakEndTime,
       note: '',
       title: '',
       type: 'work',
@@ -46,8 +62,51 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
   useEffect(() => {
     if (initialShift) {
       const initialPhotos = initialShift.photos || (initialShift.photo ? [initialShift.photo] : []);
+      const hasInitialBreak = initialShift.hasBreak !== undefined 
+        ? initialShift.hasBreak 
+        : Boolean((initialShift.breakStartTime && initialShift.breakEndTime) || (initialShift.breakMinutes > 0));
+
+      let bStart = initialShift.breakStartTime;
+      let bEnd = initialShift.breakEndTime;
+      let bMin = initialShift.breakMinutes || 0;
+
+      if (hasInitialBreak) {
+        if (!bStart || !bEnd) {
+          const startM = timeToMinutes(initialShift.startTime);
+          let endM = timeToMinutes(initialShift.endTime);
+          if (endM < startM) endM += 1440;
+          const dur = endM - startM;
+          const bDuration = Math.min(bMin > 0 ? bMin : 60, dur);
+          const midOff = Math.floor(dur / 2);
+          let bsOff = Math.max(0, midOff - Math.floor(bDuration / 2));
+          bsOff = Math.round(bsOff / 10) * 10;
+          let beOff = bsOff + bDuration;
+          if (beOff > dur) {
+            beOff = dur;
+            bsOff = Math.max(0, beOff - bDuration);
+          }
+          bStart = offsetToTimeStr(bsOff, startM);
+          bEnd = offsetToTimeStr(beOff, startM);
+          bMin = beOff - bsOff;
+        } else {
+          const sanitized = sanitizeBreakTimes(initialShift.startTime, initialShift.endTime, bStart, bEnd);
+          bStart = sanitized.breakStartTime;
+          bEnd = sanitized.breakEndTime;
+          bMin = sanitized.breakMinutes;
+        }
+      } else {
+        const defaultBreak = sanitizeBreakTimes(initialShift.startTime, initialShift.endTime);
+        bStart = defaultBreak.breakStartTime;
+        bEnd = defaultBreak.breakEndTime;
+        bMin = 0;
+      }
+
       setFormData({ 
         ...initialShift, 
+        hasBreak: hasInitialBreak,
+        breakStartTime: bStart,
+        breakEndTime: bEnd,
+        breakMinutes: bMin,
         title: initialShift.title || '', 
         color: initialShift.color || '#64748b', 
         photo: initialShift.photo || '',
@@ -66,12 +125,16 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       const defaultPaidLeaveHours = lastPaidLeaveHours !== null ? parseInt(lastPaidLeaveHours) : 8;
       const lastPaidLeaveMinutes = localStorage.getItem('shiftmaster_last_paidLeaveMinutes');
       const defaultPaidLeaveMinutes = lastPaidLeaveMinutes !== null ? parseInt(lastPaidLeaveMinutes) : 0;
+      const defaultBreak = sanitizeBreakTimes(lastStartTime, lastEndTime);
 
       setFormData({
         date: selectedDate,
         startTime: lastStartTime,
         endTime: lastEndTime,
         breakMinutes: 0,
+        hasBreak: false,
+        breakStartTime: defaultBreak.breakStartTime,
+        breakEndTime: defaultBreak.breakEndTime,
         note: '',
         title: '',
         type: 'work',
@@ -97,8 +160,59 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
   const handleTimeChange = (type: 'startTime' | 'endTime', part: 'h' | 'm', value: string) => {
     const current = formData[type].split(':');
     const newTime = part === 'h' ? `${value}:${current[1]}` : `${current[0]}:${value}`;
-    
-    setFormData({ ...formData, [type]: newTime });
+    const newStartTime = type === 'startTime' ? newTime : formData.startTime;
+    const newEndTime = type === 'endTime' ? newTime : formData.endTime;
+
+    const sanitized = sanitizeBreakTimes(newStartTime, newEndTime, formData.breakStartTime, formData.breakEndTime);
+    setFormData(prev => ({ 
+      ...prev, 
+      [type]: newTime,
+      breakStartTime: sanitized.breakStartTime,
+      breakEndTime: sanitized.breakEndTime,
+      breakMinutes: prev.hasBreak ? sanitized.breakMinutes : 0
+    }));
+  };
+
+  const handleBreakCheckboxChange = (checked: boolean) => {
+    if (checked) {
+      const sanitized = sanitizeBreakTimes(formData.startTime, formData.endTime, formData.breakStartTime, formData.breakEndTime);
+      setFormData(prev => ({
+        ...prev,
+        hasBreak: true,
+        breakStartTime: sanitized.breakStartTime,
+        breakEndTime: sanitized.breakEndTime,
+        breakMinutes: sanitized.breakMinutes
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        hasBreak: false,
+        breakMinutes: 0
+      }));
+    }
+  };
+
+  const handleBreakTimeChange = (type: 'breakStartTime' | 'breakEndTime', part: 'h' | 'm', value: string) => {
+    const currentStr = (type === 'breakStartTime' ? formData.breakStartTime : formData.breakEndTime) || '12:00';
+    const [curH, curM] = currentStr.split(':');
+    const newTime = part === 'h' ? `${value}:${curM}` : `${curH}:${value}`;
+
+    if (type === 'breakStartTime') {
+      const sanitized = sanitizeBreakTimes(formData.startTime, formData.endTime, newTime, formData.breakEndTime);
+      setFormData(prev => ({
+        ...prev,
+        breakStartTime: sanitized.breakStartTime,
+        breakEndTime: sanitized.breakEndTime,
+        breakMinutes: sanitized.breakMinutes
+      }));
+    } else {
+      const sanitized = sanitizeBreakTimes(formData.startTime, formData.endTime, formData.breakStartTime, newTime);
+      setFormData(prev => ({
+        ...prev,
+        breakEndTime: sanitized.breakEndTime,
+        breakMinutes: sanitized.breakMinutes
+      }));
+    }
   };
 
   const handleTypeSwitch = (type: EntryType) => {
@@ -109,6 +223,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       jobId: type === 'general' ? undefined : (prev.jobId || jobs[0]?.id || ''),
       // Also clear work-specific fields if it's general
       breakMinutes: type === 'general' ? 0 : prev.breakMinutes,
+      hasBreak: type === 'general' ? false : prev.hasBreak,
       // Clear photo if switching to work
       photo: type === 'general' ? prev.photo : '',
       photos: type === 'general' ? prev.photos : [],
@@ -183,6 +298,51 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     );
   };
 
+  const BreakTimeSelector = ({ 
+    label, 
+    value, 
+    type, 
+    hourOptions, 
+    minuteOptions 
+  }: { 
+    label: string; 
+    value: string; 
+    type: 'breakStartTime' | 'breakEndTime';
+    hourOptions: string[];
+    minuteOptions: string[];
+  }) => {
+    const [h, m] = (value || '12:00').split(':');
+    
+    return (
+      <div className="flex-1">
+        <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">{label}</label>
+        <div className="flex items-center gap-1">
+          <select 
+            value={h}
+            onChange={(e) => handleBreakTimeChange(type, 'h', e.target.value)}
+            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-mono cursor-pointer text-slate-700 dark:text-slate-200"
+          >
+            {!hourOptions.includes(h) && (
+              <option value={h} disabled hidden>{h}</option>
+            )}
+            {hourOptions.map(hour => <option key={hour} value={hour}>{hour}</option>)}
+          </select>
+          <span className="font-bold text-slate-400 dark:text-slate-600">:</span>
+          <select 
+            value={m}
+            onChange={(e) => handleBreakTimeChange(type, 'm', e.target.value)}
+            className="w-full px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm font-mono cursor-pointer text-slate-700 dark:text-slate-200"
+          >
+            {!minuteOptions.includes(m) && (
+              <option value={m} disabled hidden>{m}</option>
+            )}
+            {minuteOptions.map(min => <option key={min} value={min}>{min}</option>)}
+          </select>
+        </div>
+      </div>
+    );
+  };
+
   const isEditing = initialShift !== null && initialShift !== undefined;
 
   const handleFormDelete = async (e: React.MouseEvent) => {
@@ -198,7 +358,6 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Final check to ensure consistency before saving
     const finalData = { ...formData };
 
     // Save selected values to persist for future additions
@@ -221,21 +380,58 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     if (finalData.type === 'general') {
       delete finalData.jobId;
       finalData.breakMinutes = 0;
+      finalData.hasBreak = false;
+      finalData.breakStartTime = undefined;
+      finalData.breakEndTime = undefined;
       if (finalData.isAllDay) {
         finalData.startTime = '00:00';
         finalData.endTime = '00:00';
       }
       finalData.photo = finalData.photos && finalData.photos.length > 0 ? finalData.photos[0] : '';
     } else {
-      // For work entries, we want to use the job's color, so we remove the custom color
       delete finalData.color;
       if (finalData.isPaidLeave) {
         finalData.breakMinutes = 0;
+        finalData.hasBreak = false;
+        finalData.breakStartTime = undefined;
+        finalData.breakEndTime = undefined;
+      } else {
+        if (finalData.hasBreak) {
+          const sanitized = sanitizeBreakTimes(
+            finalData.startTime,
+            finalData.endTime,
+            finalData.breakStartTime,
+            finalData.breakEndTime
+          );
+          finalData.hasBreak = true;
+          finalData.breakStartTime = sanitized.breakStartTime;
+          finalData.breakEndTime = sanitized.breakEndTime;
+          finalData.breakMinutes = sanitized.breakMinutes;
+        } else {
+          finalData.hasBreak = false;
+          finalData.breakStartTime = undefined;
+          finalData.breakEndTime = undefined;
+          finalData.breakMinutes = 0;
+        }
       }
     }
     onSave(finalData);
     onClose();
   };
+
+  const selectedJob = jobs.find(j => j.id === formData.jobId);
+  const shiftCalc = calculateShiftHours(formData, selectedJob);
+
+  const breakStartHourOptions = getBreakStartHourOptions(formData.startTime, formData.endTime);
+  const currentBsH = formData.breakStartTime ? formData.breakStartTime.split(':')[0] : (breakStartHourOptions[0] || '12');
+  const breakStartMinuteOptions = getBreakStartMinuteOptions(formData.startTime, formData.endTime, currentBsH);
+  const currentBsM = formData.breakStartTime ? formData.breakStartTime.split(':')[1] : (breakStartMinuteOptions[0] || '00');
+
+  const currentBreakStartStr = `${currentBsH}:${currentBsM}`;
+  const breakEndHourOptions = getBreakEndHourOptions(formData.startTime, formData.endTime, currentBreakStartStr);
+  const currentBeH = formData.breakEndTime ? formData.breakEndTime.split(':')[0] : (breakEndHourOptions[0] || currentBsH);
+  const breakEndMinuteOptions = getBreakEndMinuteOptions(formData.startTime, formData.endTime, currentBreakStartStr, currentBeH);
+  const currentBeM = formData.breakEndTime ? formData.breakEndTime.split(':')[1] : (breakEndMinuteOptions[0] || '00');
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
@@ -387,12 +583,52 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
             )}
 
             {formData.type === 'work' && !formData.isPaidLeave && (
-              <div>
-                <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Break (mins)</label>
-                <input 
-                  type="number" min="0" value={formData.breakMinutes} onChange={e => setFormData({ ...formData, breakMinutes: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none text-sm text-slate-700 dark:text-slate-200"
-                />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 px-1">
+                  <input 
+                    type="checkbox" 
+                    id="hasBreak" 
+                    checked={formData.hasBreak || false} 
+                    onChange={e => handleBreakCheckboxChange(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <label htmlFor="hasBreak" className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider cursor-pointer">
+                    Break Time
+                  </label>
+                </div>
+
+                {formData.hasBreak && (
+                  <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-3">
+                    <div className="flex gap-4">
+                      <BreakTimeSelector 
+                        label="Break Start" 
+                        value={formData.breakStartTime || `${currentBsH}:${currentBsM}`} 
+                        type="breakStartTime"
+                        hourOptions={breakStartHourOptions}
+                        minuteOptions={breakStartMinuteOptions}
+                      />
+                      <BreakTimeSelector 
+                        label="Break End" 
+                        value={formData.breakEndTime || `${currentBeH}:${currentBeM}`} 
+                        type="breakEndTime"
+                        hourOptions={breakEndHourOptions}
+                        minuteOptions={breakEndMinuteOptions}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-xs px-1 text-slate-600 dark:text-slate-400 pt-1 border-t border-slate-200/60 dark:border-slate-700/60">
+                      <span className="font-semibold">Break Duration:</span>
+                      <span className="font-bold font-mono text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                        {formatBreakDuration(shiftCalc.breakMinutes)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="px-4 py-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100/80 dark:border-blue-900/40 rounded-2xl flex items-center justify-between shadow-sm">
+                  <span className="text-sm font-bold text-blue-900 dark:text-blue-100">
+                    {formatTotalWorkHoursText(shiftCalc.workMinutes, shiftCalc.lateMinutes)}
+                  </span>
+                </div>
               </div>
             )}
 

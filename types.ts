@@ -18,6 +18,9 @@ export interface Shift {
   startTime: string; // HH:mm
   endTime: string; // HH:mm
   breakMinutes: number;
+  hasBreak?: boolean; // Break time enabled flag
+  breakStartTime?: string; // HH:mm
+  breakEndTime?: string; // HH:mm
   note: string;
   title?: string; // Added: title for general entries
   type: EntryType;
