@@ -15,6 +15,9 @@ import {
   offsetToTimeStr
 } from '../utils/calculations';
 
+const LAST_GENERAL_COLOR_KEY = 'shiftmaster_last_generalColor';
+const DEFAULT_GENERAL_COLOR = '#64748b';
+
 interface EventModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -36,6 +39,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     const lastPaidLeaveMinutes = localStorage.getItem('shiftmaster_last_paidLeaveMinutes');
     const defaultPaidLeaveMinutes = lastPaidLeaveMinutes !== null ? parseInt(lastPaidLeaveMinutes) : 0;
     const defaultBreak = sanitizeBreakTimes(lastStartTime, lastEndTime);
+    const lastGeneralColor = localStorage.getItem(LAST_GENERAL_COLOR_KEY) || DEFAULT_GENERAL_COLOR;
 
     return {
       date: selectedDate,
@@ -49,7 +53,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
       title: '',
       type: 'work',
       jobId: validJobId,
-      color: '#64748b',
+      color: lastGeneralColor,
       photo: '',
       photos: [],
       isAllDay: false,
@@ -60,6 +64,8 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
   });
 
   useEffect(() => {
+    const lastGeneralColor = localStorage.getItem(LAST_GENERAL_COLOR_KEY) || DEFAULT_GENERAL_COLOR;
+
     if (initialShift) {
       const initialPhotos = initialShift.photos || (initialShift.photo ? [initialShift.photo] : []);
       const hasInitialBreak = initialShift.hasBreak !== undefined 
@@ -108,7 +114,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         breakEndTime: bEnd,
         breakMinutes: bMin,
         title: initialShift.title || '', 
-        color: initialShift.color || '#64748b', 
+        color: initialShift.color || (initialShift.type === 'general' ? lastGeneralColor : DEFAULT_GENERAL_COLOR), 
         photo: initialShift.photo || '',
         photos: initialPhotos,
         isAllDay: initialShift.isAllDay || false,
@@ -139,7 +145,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
         title: '',
         type: 'work',
         jobId: validJobId,
-        color: '#64748b',
+        color: lastGeneralColor,
         photo: '',
         photos: [],
         isAllDay: false,
@@ -216,21 +222,43 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
   };
 
   const handleTypeSwitch = (type: EntryType) => {
-    setFormData(prev => ({
-      ...prev,
-      type,
-      // If switching to general, clear the jobId. If switching to work, set to first job if none exists.
-      jobId: type === 'general' ? undefined : (prev.jobId || jobs[0]?.id || ''),
-      // Also clear work-specific fields if it's general
-      breakMinutes: type === 'general' ? 0 : prev.breakMinutes,
-      hasBreak: type === 'general' ? false : prev.hasBreak,
-      // Clear photo if switching to work
-      photo: type === 'general' ? prev.photo : '',
-      photos: type === 'general' ? prev.photos : [],
-      // Clear all day if switching to work
-      isAllDay: type === 'general' ? prev.isAllDay : false,
-      isPaidLeave: type === 'general' ? false : prev.isPaidLeave
-    }));
+    setFormData(prev => {
+      let color = prev.color;
+      if (type === 'general') {
+        const savedColor = localStorage.getItem(LAST_GENERAL_COLOR_KEY) || DEFAULT_GENERAL_COLOR;
+        if (initialShift && initialShift.type === 'general' && initialShift.color) {
+          color = prev.color || initialShift.color;
+        } else {
+          color = savedColor;
+        }
+      }
+
+      return {
+        ...prev,
+        type,
+        color,
+        // If switching to general, clear the jobId. If switching to work, set to first job if none exists.
+        jobId: type === 'general' ? undefined : (prev.jobId || jobs[0]?.id || ''),
+        // Also clear work-specific fields if it's general
+        breakMinutes: type === 'general' ? 0 : prev.breakMinutes,
+        hasBreak: type === 'general' ? false : prev.hasBreak,
+        // Clear photo if switching to work
+        photo: type === 'general' ? prev.photo : '',
+        photos: type === 'general' ? prev.photos : [],
+        // Clear all day if switching to work
+        isAllDay: type === 'general' ? prev.isAllDay : false,
+        isPaidLeave: type === 'general' ? false : prev.isPaidLeave
+      };
+    });
+  };
+
+  const handleColorChange = (newColor: string) => {
+    setFormData(prev => ({ ...prev, color: newColor }));
+    try {
+      localStorage.setItem(LAST_GENERAL_COLOR_KEY, newColor);
+    } catch (err) {
+      console.error('Failed to save general event color to localStorage', err);
+    }
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -378,6 +406,13 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
     }
 
     if (finalData.type === 'general') {
+      if (finalData.color) {
+        try {
+          localStorage.setItem(LAST_GENERAL_COLOR_KEY, finalData.color);
+        } catch (err) {
+          console.error('Failed to save general event color to localStorage', err);
+        }
+      }
       delete finalData.jobId;
       finalData.breakMinutes = 0;
       finalData.hasBreak = false;
@@ -487,8 +522,8 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
                   <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1.5">Color</label>
                   <input 
                     type="color" 
-                    value={formData.color} 
-                    onChange={e => setFormData({ ...formData, color: e.target.value })}
+                    value={formData.color || DEFAULT_GENERAL_COLOR} 
+                    onChange={e => handleColorChange(e.target.value)}
                     className="w-full h-9 p-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl cursor-pointer"
                   />
                 </div>
