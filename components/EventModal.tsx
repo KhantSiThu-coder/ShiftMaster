@@ -5,6 +5,8 @@ import { formatLinks } from '../utils/text';
 import { 
   calculateShiftHours, 
   formatBreakDuration, 
+  formatWorkDuration,
+  formatLateDuration,
   formatTotalWorkHoursText, 
   getBreakStartHourOptions, 
   getBreakStartMinuteOptions, 
@@ -659,11 +661,30 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
                   </div>
                 )}
 
-                <div className="px-4 py-3 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100/80 dark:border-blue-900/40 rounded-2xl flex items-center justify-between shadow-sm">
-                  <span className="text-sm font-bold text-blue-900 dark:text-blue-100">
-                    {formatTotalWorkHoursText(shiftCalc.workMinutes, shiftCalc.lateMinutes)}
-                  </span>
-                </div>
+                {(() => {
+                  const hasLateHours = shiftCalc.lateMinutes > 0;
+                  const workText = formatWorkDuration(shiftCalc.workMinutes);
+                  const lateText = hasLateHours ? formatLateDuration(shiftCalc.lateMinutes) : '';
+                  const timeColorClass = 'text-orange-600 dark:text-orange-400';
+
+                  return (
+                    <div className="p-3.5 sm:p-4 bg-blue-50/70 dark:bg-slate-800 border border-blue-100/80 dark:border-slate-700 rounded-2xl shadow-sm transition-colors">
+                      <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                        Total Work Hours
+                      </div>
+                      <div className={`flex flex-wrap items-baseline gap-x-2.5 gap-y-1 ${timeColorClass}`}>
+                        <span className={`text-2xl sm:text-3xl font-black tracking-tight ${timeColorClass}`}>
+                          {workText}
+                        </span>
+                        {lateText && (
+                          <span className={`text-lg sm:text-xl font-bold tracking-tight ${timeColorClass}`}>
+                            ({lateText})
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

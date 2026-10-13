@@ -30,21 +30,39 @@ export const formatBreakDuration = (minutes: number): string => {
   return `${h}h ${m}m`;
 };
 
+export const formatWorkDuration = (minutes: number): string => {
+  const totalM = Math.max(0, Math.round(minutes));
+  const h = Math.floor(totalM / 60);
+  const m = totalM % 60;
+  if (h === 0 && m === 0) return '0h';
+  if (m === 0) return `${h}h`;
+  if (h === 0) return `${m}m`;
+  return `${h}h ${m}m`;
+};
+
+export const formatLateDuration = (minutes: number): string => {
+  const totalM = Math.max(0, Math.round(minutes));
+  if (totalM <= 0) return '';
+  const h = Math.floor(totalM / 60);
+  const m = totalM % 60;
+  if (m === 0) return `${lhLateText(h)}`;
+  if (h === 0) return `${m}m late`;
+  return `${h}h ${m}m late`;
+};
+
+const lhLateText = (h: number): string => `${h}h late`;
+
 export const formatTotalWorkHoursText = (
   workMinutes: number, 
   lateMinutes: number = 0
 ): string => {
-  const wM = Math.max(0, Math.round(workMinutes));
-  const wh = Math.floor(wM / 60);
-  const wm = wM % 60;
-  const workText = `${wh}h ${String(wm).padStart(2, '0')}m`;
+  const workText = formatWorkDuration(workMinutes);
 
   if (lateMinutes > 0) {
-    const lM = Math.max(0, Math.round(lateMinutes));
-    const lh = Math.floor(lM / 60);
-    const lm = lM % 60;
-    const lateText = lh > 0 ? `${lh}h ${String(lm).padStart(2, '0')}m late` : `${lm}m late`;
-    return `Total Work Hours: ${workText} (${lateText})`;
+    const lateText = formatLateDuration(lateMinutes);
+    if (lateText) {
+      return `Total Work Hours: ${workText} (${lateText})`;
+    }
   }
 
   return `Total Work Hours: ${workText}`;
