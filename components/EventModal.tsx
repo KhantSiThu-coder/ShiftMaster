@@ -677,7 +677,7 @@ export const EventModal: React.FC<EventModalProps> = ({ isOpen, onClose, onSave,
                           {workText}
                         </span>
                         {lateText && (
-                          <span className={`text-lg sm:text-xl font-bold tracking-tight ${timeColorClass}`}>
+                          <span className={`text-2xl sm:text-3xl font-black tracking-tight ${timeColorClass}`}>
                             ({lateText})
                           </span>
                         )}

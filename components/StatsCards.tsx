@@ -48,8 +48,7 @@ export const StatsCards: React.FC<{ stats: ShiftStats }> = ({ stats }) => {
       )}
       <StatCard 
         title="Late Work" 
-        value={`${stats.lateNightHours.toFixed(1)}h`} 
-        sub="Post-22:00"
+        value={formatHoursAndMinutes(stats.lateNightHours)} 
         color="bg-indigo-600 dark:bg-indigo-500"
         icon={<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>}
       />

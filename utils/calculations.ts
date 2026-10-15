@@ -15,9 +15,14 @@ export const offsetToTimeStr = (offset: number, startMin: number): string => {
 };
 
 export const formatHoursAndMinutes = (decimalHours: number): string => {
-  const totalMinutes = Math.round(Math.max(0, decimalHours) * 60);
+  const validHours = Number.isFinite(decimalHours) ? Math.max(0, decimalHours) : 0;
+  const totalMinutes = Math.round(validHours * 60);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
+
+  if (hours === 0 && minutes === 0) return '0 mins';
+  if (hours === 0) return `${minutes} mins`;
+  if (minutes === 0) return `${hours} hrs`;
   return `${hours} hrs ${minutes} mins`;
 };
 
