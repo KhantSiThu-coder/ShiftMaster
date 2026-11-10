@@ -10,6 +10,7 @@ import { JobManager } from './components/JobManager';
 import { EventModal } from './components/EventModal';
 import { DayHistoryModal } from './components/DayHistoryModal';
 import { ShiftList } from './components/ShiftList';
+import { RecoveryTools } from './components/RecoveryTools';
 
 type ViewMode = 'calendar' | 'list';
 
@@ -309,6 +310,7 @@ const App: React.FC = () => {
       </nav>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        <RecoveryTools />
         <div className="flex items-center justify-between mb-3 sm:hidden">
           <h2 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Monthly Summary</h2>
           <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/30">
