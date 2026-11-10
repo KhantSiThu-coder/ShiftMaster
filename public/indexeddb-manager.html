@@ -1,967 +1,397 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Shifthu IndexedDB Recovery Manager</title>
-
-<style>
-  * {
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: Arial, sans-serif;
-    padding: 16px;
-    margin: 0;
-    background: #f5f5f5;
-    color: #222;
-  }
-
-  .container {
-    max-width: 900px;
-    margin: auto;
-  }
-
-  .panel {
-    background: white;
-    border-radius: 12px;
-    padding: 18px;
-    margin-bottom: 16px;
-  }
-
-  button, select {
-    padding: 12px;
-    margin: 5px 3px;
-    border-radius: 7px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    max-width: 100%;
-  }
-
-  button {
-    cursor: pointer;
-    background: #222;
-    color: white;
-  }
-
-  button.secondary {
-    background: #eee;
-    color: #222;
-  }
-
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  select {
-    width: 100%;
-    background: white;
-    margin: 8px 0;
-  }
-
-  pre {
-    background: #181818;
-    color: #a8f0ae;
-    padding: 15px;
-    border-radius: 8px;
-    overflow: auto;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-    max-height: 400px;
-    font-size: 12px;
-  }
-
-  .muted {
-    color: #666;
-    font-size: 13px;
-  }
-
-  .record {
-    border-bottom: 1px solid #ddd;
-    padding: 12px 0;
-  }
-
-  .status {
-    padding: 12px;
-    border-radius: 8px;
-    background: #eee;
-    margin: 10px 0;
-    overflow-wrap: anywhere;
-  }
-
-  .warning {
-    background: #fff3cd;
-    color: #664d03;
-  }
-
-  h2 {
-    font-size: 19px;
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shifthu Storage Inspector & Backup</title>
+  <style>
+    :root { color-scheme: light dark; --bg:#f5f7fb; --panel:#fff; --text:#182230; --muted:#667085; --line:#d8dee8; --accent:#2457d6; --warn:#fff4db; --warnline:#e6b84c; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#10151d; --panel:#19212c; --text:#edf2f7; --muted:#aab6c5; --line:#354253; --accent:#83a8ff; --warn:#382d17; --warnline:#8d6d2b; }
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:20px; background:var(--bg); color:var(--text); font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; }
+    main { max-width:980px; margin:auto; }
+    h1 { font-size:1.65rem; margin:0 0 8px; }
+    h2 { font-size:1.15rem; margin:0 0 12px; }
+    p { margin:7px 0; }
+    .muted { color:var(--muted); font-size:.92rem; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px; margin:16px 0; }
+    .warning { background:var(--warn); border:1px solid var(--warnline); border-radius:12px; padding:13px 15px; margin:16px 0; }
+    button { appearance:none; border:0; border-radius:9px; padding:10px 14px; margin:5px 7px 5px 0; background:var(--accent); color:white; font-weight:650; cursor:pointer; }
+    button.secondary { background:transparent; color:var(--text); border:1px solid var(--line); }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    select { max-width:100%; padding:9px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--text); }
+    pre { white-space:pre-wrap; overflow-wrap:anywhere; background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:12px; max-height:420px; overflow:auto; font-size:.86rem; }
+    .row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+    .store { border-top:1px solid var(--line); padding:12px 0; }
+    .store:first-child { border-top:0; }
+    .pill { display:inline-block; border:1px solid var(--line); border-radius:99px; padding:2px 9px; font-size:.82rem; margin-left:6px; }
+    .status { margin-top:8px; color:var(--muted); }
+    code { overflow-wrap:anywhere; }
+  </style>
 </head>
-
 <body>
+<main>
+  <h1>Shifthu Storage Inspector & Backup</h1>
+  <p class="muted">Read-only inspection and export for data stored by this website in Safari.</p>
 
-<div class="container">
+  <div class="warning">
+    <strong>Important — protect your original data.</strong>
+    This page is designed to inspect and export. Do not clear Safari website data, delete databases,
+    import a backup, or reset anything while trying to recover your Shifthu data.
+    Export files may contain private work schedules and income information. Keep them somewhere safe.
+  </div>
 
-  <h1>Shifthu IndexedDB Recovery</h1>
+  <section class="panel">
+    <h2>1. Confirm website origin</h2>
+    <p>Storage is separated by website origin. This page must be opened at the exact old Shifthu address.</p>
+    <pre id="originInfo"></pre>
+  </section>
 
-  <p class="muted">
-    Inspect and export existing IndexedDB databases
-    belonging to this website.
-  </p>
-
-  <div class="panel">
-    <h2>1. Database Discovery</h2>
-
-    <button onclick="loadDatabases()">
-      Refresh Databases
-    </button>
-
-    <div id="status" class="status">
-      Waiting for database discovery...
+  <section class="panel">
+    <h2>2. Find existing IndexedDB databases</h2>
+    <p class="muted">This lists databases visible to this exact website origin. It does not create a database.</p>
+    <button onclick="loadDatabases()">Refresh database list</button>
+    <div id="databaseList" class="status">Loading…</div>
+    <div id="databaseDetails"></div>
+    <div class="row">
+      <button onclick="exportAllDatabases()">Export all discovered databases</button>
+      <button class="secondary" onclick="exportSelectedDatabase()">Export selected database</button>
     </div>
+    <p class="muted">Exports are JSON backups for inspection. They are not a complete IndexedDB restore image and should not be imported as a replacement database.</p>
+    <div id="dbStatus" class="status"></div>
+  </section>
 
-    <select id="databaseSelect">
-      <option value="">Select a database</option>
-    </select>
+  <section class="panel">
+    <h2>3. Inspect Local Storage, Session Storage, Cache and Service Workers</h2>
+    <p class="muted">Local Storage is shared by pages on this origin. Session Storage belongs to this browser tab/session. Cache and service-worker sections list names/registrations only; they do not delete or change them.</p>
+    <button onclick="inspectOtherStorage()">Inspect other storage</button>
+    <button class="secondary" onclick="exportOtherStorage()">Export storage report</button>
+    <div id="otherStorageResults" class="status"></div>
+  </section>
 
-    <button onclick="inspectDatabase()">
-      Inspect Database
-    </button>
-  </div>
-
-  <div class="panel">
-    <h2>2. Database Information</h2>
-
-    <div id="databaseInfo">
-      No database selected.
-    </div>
-
-    <div id="storeList"></div>
-  </div>
-
-  <div class="panel">
-    <h2>3. View Records</h2>
-
-    <select id="storeSelect">
-      <option value="">Select an object store</option>
-    </select>
-
-    <button onclick="viewRecords()">
-      View Records
-    </button>
-
-    <p id="recordCount"></p>
-
-    <div id="records"></div>
-  </div>
-
-  <div class="panel">
-    <h2>4. Export Backup</h2>
-
-    <button onclick="exportCurrentDatabase()">
-      Export Selected Database
-    </button>
-
-    <button onclick="exportAllDatabases()">
-      Export All Databases
-    </button>
-
-    <p class="muted">
-      Exported data is downloaded as JSON.
-      No records are intentionally modified.
-    </p>
-  </div>
-
-  <div class="panel warning">
-    <strong>Recovery safety</strong>
-    <p>
-      Do not clear Safari website data.
-      Do not delete databases.
-      Keep the original website origin unchanged.
-    </p>
-  </div>
-
-</div>
+  <section class="panel">
+    <h2>4. Recovery safety checklist</h2>
+    <ul>
+      <li>Keep the downloaded JSON backup files unchanged.</li>
+      <li>Do not clear Safari website data for <code>vercel.app</code>.</li>
+      <li>Do not delete <code>ShiftMaserDB</code> or any other database.</li>
+      <li>If the records are empty, check whether the original app used another Vercel preview URL or custom domain.</li>
+    </ul>
+  </section>
+</main>
 
 <script>
-
-const $ = id => document.getElementById(id);
-
-let databaseList = [];
-let currentDatabase = null;
-let operationInProgress = false;
-
-
-// ------------------------------------
-// 1. Discover existing databases
-// ------------------------------------
-
-async function loadDatabases() {
-
-  const select = $("databaseSelect");
-
-  select.innerHTML =
-    '<option value="">Select a database</option>';
-
-  $("status").textContent = "Searching databases...";
-
-  if (typeof indexedDB.databases !== "function") {
-
-    $("status").textContent =
-      "This browser does not support automatic database discovery. " +
-      "No database has been opened or created.";
-
-    return;
-  }
-
-  try {
-
-    databaseList = await indexedDB.databases();
-
-    databaseList = databaseList.filter(db => db.name);
-
-    databaseList.forEach(db => {
-
-      const option = document.createElement("option");
-
-      option.value = db.name;
-
-      option.textContent =
-        `${db.name} (Version: ${db.version ?? "Unknown"})`;
-
-      select.appendChild(option);
-
-    });
-
-    $("status").textContent =
-      databaseList.length
-        ? `${databaseList.length} database(s) discovered.`
-        : "No databases discovered.";
-
-  } catch (error) {
-
-    $("status").textContent =
-      "Discovery error: " + error.message;
-
-  }
-
-}
-
-
-// ------------------------------------
-// 2. Open selected database
-// ------------------------------------
-
-function openExistingDatabase(name) {
-
-  return new Promise((resolve, reject) => {
-
-    let request;
-
-    try {
-
-      request = indexedDB.open(name);
-
-    } catch (error) {
-
-      reject(error);
-      return;
-
-    }
-
-    request.onupgradeneeded = () => {
-
-      // Prevent accidental creation or version upgrades.
-      request.transaction.abort();
-
-    };
-
-    request.onsuccess = () => {
-
-      const db = request.result;
-
-      db.onversionchange = () => db.close();
-
-      if (!databaseList.some(item => item.name === db.name)) {
-
-        db.close();
-
-        reject(new Error(
-          "Database was not in the original discovery list."
-        ));
-
-        return;
-
-      }
-
-      resolve(db);
-
-    };
-
-    request.onerror = () => reject(request.error);
-
-    request.onblocked = () => reject(
-      new Error("Database opening is blocked.")
-    );
-
-  });
-
-}
-
-
-// ------------------------------------
-// 3. Inspect database
-// ------------------------------------
-
-async function inspectDatabase() {
-
-  const name = $("databaseSelect").value;
-
-  if (!name) {
-
-    alert("Select a database first.");
-    return;
-
-  }
-
-  try {
-
-    if (currentDatabase) {
-
-      currentDatabase.close();
-      currentDatabase = null;
-
-    }
-
-    currentDatabase = await openExistingDatabase(name);
-
-    $("databaseInfo").textContent =
-      `Database: ${currentDatabase.name} | Version: ${currentDatabase.version}`;
-
-    const stores = [...currentDatabase.objectStoreNames];
-
-    $("storeList").textContent =
-      "Object Stores: " + (stores.join(", ") || "None");
-
-    const select = $("storeSelect");
-
-    select.innerHTML =
-      '<option value="">Select an object store</option>';
-
-    stores.forEach(name => {
-
-      const option = document.createElement("option");
-
-      option.value = name;
-      option.textContent = name;
-
-      select.appendChild(option);
-
-    });
-
-    $("records").innerHTML = "";
-    $("recordCount").textContent = "";
-
-  } catch (error) {
-
-    alert("Inspection error: " + error.message);
-
-  }
-
-}
-
-
-// ------------------------------------
-// 4. Read records
-// ------------------------------------
-
-async function getStoreData(db, storeName) {
-
-  return new Promise((resolve, reject) => {
-
-    let transaction;
-
-    try {
-
-      transaction = db.transaction(storeName, "readonly");
-
-    } catch (error) {
-
-      reject(error);
-      return;
-
-    }
-
-    const store = transaction.objectStore(storeName);
-
-    const records = [];
-
-    const request = store.openCursor();
-
-    request.onsuccess = event => {
-
-      const cursor = event.target.result;
-
-      if (cursor) {
-
-        records.push({
-
-          key: cursor.primaryKey,
-          value: cursor.value
-
-        });
-
-        cursor.continue();
-
-      } else {
-
-        resolve(records);
-
-      }
-
-    };
-
-    request.onerror = () => reject(request.error);
-
-    transaction.onabort = () => reject(transaction.error);
-
-  });
-
-}
-
-
-// ------------------------------------
-// 5. Display records
-// ------------------------------------
-
-async function viewRecords() {
-
-  if (!currentDatabase) {
-
-    alert("Inspect a database first.");
-    return;
-
-  }
-
-  const storeName = $("storeSelect").value;
-
-  if (!storeName) {
-
-    alert("Select an object store.");
-    return;
-
-  }
-
-  try {
-
-    const records = await getStoreData(
-      currentDatabase,
-      storeName
-    );
-
-    $("recordCount").textContent =
-      `Total records: ${records.length}`;
-
-    const output = $("records");
-
-    output.innerHTML = "";
-
-    records.slice(0, 100).forEach((record, index) => {
-
-      const div = document.createElement("div");
-
-      div.className = "record";
-
-      const title = document.createElement("strong");
-
-      title.textContent = `Record ${index + 1}`;
-
-      const pre = document.createElement("pre");
-
-      pre.textContent = JSON.stringify(
-        record,
-        previewReplacer,
-        2
-      );
-
-      div.append(title, pre);
-
-      output.appendChild(div);
-
-    });
-
-    if (records.length > 100) {
-
-      const note = document.createElement("p");
-
-      note.textContent =
-        "Showing first 100 records. Export includes all records.";
-
-      output.appendChild(note);
-
-    }
-
-  } catch (error) {
-
-    alert("Read error: " + error.message);
-
-  }
-
-}
-
-
-// ------------------------------------
-// 6. Preview special values
-// ------------------------------------
-
-function previewReplacer(key, value) {
-
-  if (typeof value === "bigint") {
-
-    return value.toString() + "n";
-
-  }
-
-  if (value instanceof Blob) {
-
-    return {
-
-      type: "Blob",
-      size: value.size,
-      mimeType: value.type
-
-    };
-
-  }
-
-  return value;
-
-}
-
-
-// ------------------------------------
-// 7. Binary to Base64
-// ------------------------------------
-
-function bytesToBase64(bytes) {
-
-  let binary = "";
-
-  const chunkSize = 0x8000;
-
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-
-    binary += String.fromCharCode(
-      ...bytes.subarray(i, i + chunkSize)
-    );
-
-  }
-
-  return btoa(binary);
-
-}
-
-
-// ------------------------------------
-// 8. Serialize special values
-// ------------------------------------
-
-async function serializeValue(value, seen = new WeakSet()) {
-
-  if (value === null || typeof value !== "object") {
-
-    if (typeof value === "bigint") {
-
-      return {
-
-        __type: "BigInt",
-        value: value.toString()
-
-      };
-
-    }
-
-    return value;
-
-  }
-
-  if (seen.has(value)) {
-
-    throw new Error("Circular reference detected.");
-
-  }
-
-  seen.add(value);
-
-  try {
-
-    if (value instanceof Date) {
-
-      return {
-
-        __type: "Date",
-        value: value.toISOString()
-
-      };
-
-    }
-
-    if (value instanceof Blob) {
-
-      const data = await new Promise((resolve, reject) => {
-
-        const reader = new FileReader();
-
-        reader.onload = () => resolve(reader.result);
-
-        reader.onerror = () => reject(reader.error);
-
-        reader.readAsDataURL(value);
-
-      });
-
-      return {
-
-        __type: "Blob",
-        mimeType: value.type,
-        data
-
-      };
-
-    }
-
-    if (value instanceof ArrayBuffer) {
-
-      return {
-
-        __type: "ArrayBuffer",
-        data: bytesToBase64(new Uint8Array(value))
-
-      };
-
-    }
-
-    if (ArrayBuffer.isView(value)) {
-
-      return {
-
-        __type: value.constructor.name,
-
-        data: bytesToBase64(
-          new Uint8Array(
-            value.buffer,
-            value.byteOffset,
-            value.byteLength
-          )
-        )
-
-      };
-
-    }
-
-    if (Array.isArray(value)) {
-
-      const result = [];
-
-      for (const item of value) {
-
-        result.push(await serializeValue(item, seen));
-
-      }
-
-      return result;
-
-    }
-
-    if (value instanceof Map) {
-
-      const entries = [];
-
-      for (const [key, item] of value) {
-
-        entries.push([
-
-          await serializeValue(key, seen),
-          await serializeValue(item, seen)
-
-        ]);
-
-      }
-
-      return {
-
-        __type: "Map",
-        entries
-
-      };
-
-    }
-
-    if (value instanceof Set) {
-
-      const items = [];
-
-      for (const item of value) {
-
-        items.push(await serializeValue(item, seen));
-
-      }
-
-      return {
-
-        __type: "Set",
-        items
-
-      };
-
-    }
-
-    const result = {};
-
-    for (const key of Object.keys(value)) {
-
-      result[key] = await serializeValue(
-        value[key],
-        seen
-      );
-
-    }
-
-    return result;
-
-  } finally {
-
-    seen.delete(value);
-
-  }
-
-}
-
-
-// ------------------------------------
-// 9. Build backup
-// ------------------------------------
-
-async function buildBackup(db) {
-
-  const backup = {
-
-    format: "Shifthu-IndexedDB-Backup",
-
-    formatVersion: 1,
-
-    exportedAt: new Date().toISOString(),
-
-    database: {
-
-      name: db.name,
-
-      version: db.version,
-
-      stores: {}
-
-    }
-
-  };
-
-  for (const storeName of [...db.objectStoreNames]) {
-
-    const records = await getStoreData(db, storeName);
-
-    const serialized = [];
-
-    for (const record of records) {
-
-      serialized.push({
-
-        key: await serializeValue(record.key),
-
-        value: await serializeValue(record.value)
-
-      });
-
-    }
-
-    backup.database.stores[storeName] = {
-
-      recordCount: records.length,
-
-      records: serialized
-
-    };
-
-  }
-
-  return backup;
-
-}
-
-
-// ------------------------------------
-// 10. Download JSON
-// ------------------------------------
+"use strict";
+
+let discoveredDatabases = [];
+let selectedDatabaseName = null;
+let selectedDatabaseBackup = null;
+let otherStorageReport = null;
+
+document.getElementById("originInfo").textContent =
+  "Current origin: " + location.origin + "\nFull URL: " + location.href;
 
 function downloadJSON(data, filename) {
-
-  const blob = new Blob(
-
-    [JSON.stringify(data, null, 2)],
-
-    { type: "application/json" }
-
-  );
-
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
-
   const link = document.createElement("a");
-
   link.href = url;
   link.download = filename;
-
   document.body.appendChild(link);
-
   link.click();
-
   link.remove();
-
-  setTimeout(() => {
-
-    URL.revokeObjectURL(url);
-
-  }, 60000);
-
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
-
-// ------------------------------------
-// 11. Export selected database
-// ------------------------------------
-
-async function exportCurrentDatabase() {
-
-  if (!currentDatabase) {
-
-    alert("Inspect a database first.");
-    return;
-
+function serializeValue(value, seen = new WeakSet()) {
+  if (value === null || typeof value === "string" ||
+      typeof value === "number" || typeof value === "boolean") return value;
+  if (typeof value === "undefined") return { __type: "undefined" };
+  if (typeof value === "bigint") return { __type: "BigInt", value: value.toString() };
+  if (value instanceof Date) return { __type: "Date", value: value.toISOString() };
+  if (value instanceof Blob) {
+    return { __type: "Blob", mimeType: value.type, size: value.size,
+      note: "Blob content is not included in this JSON export." };
   }
+  if (value instanceof ArrayBuffer) {
+    const bytes = new Uint8Array(value);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return { __type: "ArrayBuffer", base64: btoa(binary) };
+  }
+  if (ArrayBuffer.isView(value)) {
+    return { __type: value.constructor.name,
+      values: Array.from(value, item => typeof item === "bigint" ? item.toString() : item) };
+  }
+  if (typeof value === "object") {
+    if (seen.has(value)) return { __type: "CircularReference" };
+    seen.add(value);
+    if (Array.isArray(value)) return value.map(item => serializeValue(item, seen));
+    if (value instanceof Map) return { __type: "Map",
+      entries: Array.from(value.entries(), ([k,v]) => [serializeValue(k, seen), serializeValue(v, seen)]) };
+    if (value instanceof Set) return { __type: "Set", values: Array.from(value, item => serializeValue(item, seen)) };
+    const output = {};
+    for (const key of Object.keys(value)) {
+      try { output[key] = serializeValue(value[key], seen); }
+      catch (error) { output[key] = { __type: "SerializationError", message: error.message }; }
+    }
+    return output;
+  }
+  return String(value);
+}
 
-  if (operationInProgress) return;
+function requestToPromise(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("IndexedDB request failed"));
+  });
+}
 
-  operationInProgress = true;
+async function getAllFromStore(db, storeName) {
+  return new Promise((resolve, reject) => {
+    let transaction;
+    try { transaction = db.transaction(storeName, "readonly"); }
+    catch (error) { reject(error); return; }
+    const store = transaction.objectStore(storeName);
+    const request = store.getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error || new Error("Could not read object store"));
+  });
+}
+
+function openListedDatabase(name) {
+  return new Promise((resolve, reject) => {
+    // The name comes only from indexedDB.databases(), so this opens an existing DB.
+    const request = indexedDB.open(name);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error("Could not open database"));
+    request.onblocked = () => reject(new Error("Database open is blocked by another tab."));
+  });
+}
+
+async function inspectDatabase(name) {
+  const db = await openListedDatabase(name);
+  try {
+    const stores = [];
+    for (const storeName of Array.from(db.objectStoreNames)) {
+      let records = [];
+      let readError = null;
+      try { records = await getAllFromStore(db, storeName); }
+      catch (error) { readError = error.message; }
+      stores.push({
+        name: storeName,
+        count: records.length,
+        records: records.map(record => serializeValue(record)),
+        readError
+      });
+    }
+    return {
+      name: db.name,
+      version: db.version,
+      objectStores: stores
+    };
+  } finally {
+    db.close();
+  }
+}
+
+async function loadDatabases() {
+  const list = document.getElementById("databaseList");
+  const details = document.getElementById("databaseDetails");
+  const status = document.getElementById("dbStatus");
+  list.textContent = "Checking this origin…";
+  details.innerHTML = "";
+  status.textContent = "";
+  selectedDatabaseBackup = null;
+  selectedDatabaseName = null;
+
+  if (!("indexedDB" in window)) {
+    list.textContent = "IndexedDB is not available in this browser.";
+    return;
+  }
+  if (typeof indexedDB.databases !== "function") {
+    list.textContent = "This browser does not support listing IndexedDB databases. No database names will be guessed.";
+    return;
+  }
 
   try {
+    discoveredDatabases = (await indexedDB.databases())
+      .filter(item => item && item.name)
+      .map(item => ({ name: item.name, version: item.version ?? null }));
 
-    const backup = await buildBackup(currentDatabase);
+    if (!discoveredDatabases.length) {
+      list.textContent = "No IndexedDB databases were found for this origin.";
+      return;
+    }
 
-    downloadJSON(
-
-      backup,
-
-      `${currentDatabase.name}-backup.json`
-
-    );
-
-    alert("Selected database backup prepared.");
-
+    const select = document.createElement("select");
+    select.id = "databaseSelect";
+    for (const item of discoveredDatabases) {
+      const option = document.createElement("option");
+      option.value = item.name;
+      option.textContent = item.name + (item.version ? " (version " + item.version + ")" : "");
+      select.appendChild(option);
+    }
+    select.onchange = () => {
+      selectedDatabaseName = select.value;
+      inspectSelectedDatabase();
+    };
+    list.replaceChildren(select);
+    selectedDatabaseName = discoveredDatabases[0].name;
+    await inspectSelectedDatabase();
   } catch (error) {
-
-    alert("Export failed: " + error.message);
-
-  } finally {
-
-    operationInProgress = false;
-
+    list.textContent = "Could not list databases: " + error.message;
   }
-
 }
 
+async function inspectSelectedDatabase() {
+  const details = document.getElementById("databaseDetails");
+  const status = document.getElementById("dbStatus");
+  const selector = document.getElementById("databaseSelect");
+  if (selector) selectedDatabaseName = selector.value;
+  if (!selectedDatabaseName) return;
 
-// ------------------------------------
-// 12. Export all discovered databases
-// ------------------------------------
+  details.textContent = "Reading database…";
+  try {
+    selectedDatabaseBackup = await inspectDatabase(selectedDatabaseName);
+    details.innerHTML = "";
+    const heading = document.createElement("p");
+    heading.innerHTML = "<strong>Database:</strong> ";
+    heading.append(document.createTextNode(selectedDatabaseBackup.name + " — version " + selectedDatabaseBackup.version));
+    details.appendChild(heading);
+
+    for (const store of selectedDatabaseBackup.objectStores) {
+      const section = document.createElement("div");
+      section.className = "store";
+      const title = document.createElement("div");
+      title.innerHTML = "<strong></strong>";
+      title.querySelector("strong").textContent = store.name;
+      const count = document.createElement("span");
+      count.className = "pill";
+      count.textContent = store.readError ? "read error" : store.count + " records";
+      title.appendChild(count);
+      section.appendChild(title);
+
+      const preview = document.createElement("pre");
+      preview.textContent = store.readError
+        ? "Error: " + store.readError
+        : JSON.stringify(store.records.slice(0, 100), null, 2) +
+          (store.count > 100 ? "\n\nPreview limited to first 100 records. Export contains all records." : "");
+      section.appendChild(preview);
+      details.appendChild(section);
+    }
+    status.textContent = "Inspection complete. No records were changed.";
+  } catch (error) {
+    details.textContent = "Could not inspect database: " + error.message;
+    status.textContent = "";
+  }
+}
+
+async function exportSelectedDatabase() {
+  if (!selectedDatabaseName) {
+    alert("No database is selected.");
+    return;
+  }
+  try {
+    const backup = await inspectDatabase(selectedDatabaseName);
+    downloadJSON({
+      exportedAt: new Date().toISOString(),
+      origin: location.origin,
+      database: backup,
+      note: "Forensic JSON export only; not a complete IndexedDB restore image."
+    }, selectedDatabaseName + "-backup.json");
+    document.getElementById("dbStatus").textContent = "Selected database export started.";
+  } catch (error) {
+    alert("Export failed: " + error.message);
+  }
+}
 
 async function exportAllDatabases() {
-
-  if (operationInProgress) return;
-
-  operationInProgress = true;
-
-  try {
-
-    await loadDatabases();
-
-    if (!databaseList.length) {
-
-      alert("No databases discovered.");
-
-      return;
-
-    }
-
-    const allBackups = [];
-
-    for (const info of databaseList) {
-
-      const db = await openExistingDatabase(info.name);
-
-      try {
-
-        allBackups.push(await buildBackup(db));
-
-      } finally {
-
-        db.close();
-
-      }
-
-    }
-
-    downloadJSON(
-
-      {
-
-        format: "Shifthu-Complete-IndexedDB-Backup",
-
-        formatVersion: 1,
-
-        exportedAt: new Date().toISOString(),
-
-        databases: allBackups
-
-      },
-
-      "all-indexeddb-backup.json"
-
-    );
-
-    alert("All database backups prepared.");
-
-  } catch (error) {
-
-    alert("Export failed: " + error.message);
-
-  } finally {
-
-    operationInProgress = false;
-
+  if (!discoveredDatabases.length) {
+    alert("No discovered databases to export. Refresh the database list first.");
+    return;
   }
-
+  const report = {
+    exportedAt: new Date().toISOString(),
+    origin: location.origin,
+    databases: [],
+    errors: [],
+    note: "Forensic JSON export only; not a complete IndexedDB restore image. Blob contents and some structured-clone types are not fully preserved."
+  };
+  for (const item of discoveredDatabases) {
+    try { report.databases.push(await inspectDatabase(item.name)); }
+    catch (error) { report.errors.push({ name: item.name, error: error.message }); }
+  }
+  downloadJSON(report, "all-indexeddb-backup.json");
+  document.getElementById("dbStatus").textContent = "All-database export started.";
 }
 
+async function inspectOtherStorage() {
+  const output = document.getElementById("otherStorageResults");
+  output.textContent = "Inspecting…";
+  const report = {
+    origin: location.origin,
+    inspectedAt: new Date().toISOString(),
+    localStorage: {},
+    sessionStorage: {},
+    cacheNames: [],
+    serviceWorkers: []
+  };
 
-// ------------------------------------
-// 13. Start discovery
-// ------------------------------------
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      report.localStorage[key] = localStorage.getItem(key);
+    }
+  } catch (error) {
+    report.localStorageError = error.message;
+  }
+
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      report.sessionStorage[key] = sessionStorage.getItem(key);
+    }
+  } catch (error) {
+    report.sessionStorageError = error.message;
+  }
+
+  try {
+    if ("caches" in window) report.cacheNames = await caches.keys();
+  } catch (error) {
+    report.cacheError = error.message;
+  }
+
+  try {
+    if ("serviceWorker" in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      report.serviceWorkers = registrations.map(reg => ({
+        scope: reg.scope,
+        active: reg.active?.scriptURL || null,
+        waiting: reg.waiting?.scriptURL || null
+      }));
+    }
+  } catch (error) {
+    report.serviceWorkerError = error.message;
+  }
+
+  otherStorageReport = report;
+  const pre = document.createElement("pre");
+  pre.textContent = JSON.stringify(report, null, 2);
+  output.replaceChildren(pre);
+}
+
+function exportOtherStorage() {
+  if (!otherStorageReport) {
+    alert("Click “Inspect other storage” first.");
+    return;
+  }
+  downloadJSON(otherStorageReport, "shifthu-other-storage-backup.json");
+}
 
 loadDatabases();
-
 </script>
-
 </body>
 </html>
